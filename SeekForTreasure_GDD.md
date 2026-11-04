@@ -2,20 +2,20 @@
 
 | Field | Value |
 |---|---|
-| Status | **Checkpoint 1: waiting for written approval. No game code has been written.** |
+| Status | **Checkpoint 1 answered on 2026-11-04 (decisions in §0.1). Waiting for an explicit go-ahead for Phase 2. No game code has been written.** |
 | Version | GDD v1.0, 2026-11-04 |
 | Genre | Idle RNG collection tycoon (auto-search → reveal → place → earn → upgrade → rebirth) |
 | Platform focus | Roblox, mobile first (landscape phone), desktop/tablet/console supported |
 | Server size | 8 players, 8 plots |
 | Economy tool | `tools/economy_sim.py` (run log: `tools/economy_sim_output.md`) |
-| Recommended MVP segment | **Pets** (Pawprint Meadow); see §4 and Open Question 1 |
+| MVP segment | **Pets** (Pawprint Meadow), approved |
 
 > **Environment blockers for Phase 2 (found during setup).**
 > 1. **Roblox Studio MCP is not connected to this session.** ForgeGUI MCP responds (free reads OK). Phase 2 can't build or test in Studio until it is.
 > 2. **ForgeGUI → Roblox publishing connection `@GavinForReal` shows `needs_validation / asset_permission_missing`.** Models and images can be generated but not uploaded to Roblox until the API key gets asset permissions.
-> 3. Two prompt placeholders were not filled in: `[FORGEGUI CREDIT BUDGET]` and `[YOUR ROBLOX USERID]`.
+> 3. **ForgeGUI 3D model generation is locked on the current plan** (`paid_generation_required`). GUI images work. Every treasure model, prop and pedestal needs a plan upgrade (https://forgegui.com/plans).
 
-**How to read this doc.** Each feature is tagged **MVP** (built in Phase 2) or **Backlog** (designed here, not built). The MVP scope is exactly the list in the brief. A few small sub-features it needs are tagged **MVP\*** and listed in §0. They are yours to veto at approval.
+**How to read this doc.** Each feature is tagged **MVP** (built in Phase 2) or **Backlog** (designed here, not built). The MVP scope is exactly the list in the brief. A few small sub-features it needs are tagged **MVP\*** and listed in §0; you approved them at Checkpoint 1.
 
 ---
 
@@ -24,22 +24,46 @@
 | Area | MVP (Phase 2) | Backlog |
 |---|---|---|
 | Segments | 1 segment (recommend Pets) with its search area and auto-search | Fish, Cars, Anime |
-| RNG | 10 rarities, Luck, pity, Finish + Aura mutations (cap 10x) | Treasure Storm, onboarding forced finds |
+| RNG | 10 rarities, Luck, pity, Finish + Aura mutations (cap 10x), onboarding forced finds + tutorial | Treasure Storm |
 | Plot | Claim on join, place/remove, cash accrual, Collect pad, offline earnings | Showcase pedestal, offline-cap upgrades |
 | Shop | One tool line (8 tiers), 4 potions, plot-slot upgrade | Enhancements, walk/search-speed upgrades |
 | Meta | Rebirth, saving, Index (+ luck milestones), reveal cinematic, Mythic+ server banner | Sky beam, cross-server Celestial+ banner, badges*, leaderboards |
-| Social | Friend boost, codes (+ static "next code at X likes" board) | Group reward, playtime gifts, daily streak, live like counter |
+| Social | Friend boost, codes (launch code `SEEKATREASURE`), "next code at X likes" board with a **live** like counter (pending the approvals in §0.1) | Group reward, playtime gifts, daily streak |
 | Monetization | None (needs your approval to create products) | All of §10 |
-| Tooling | Dev commands (Studio only, your UserId) | — |
+| Tooling | Dev commands (Studio only, UserId 422765950); AnalyticsService funnel + economy events | — |
 
-**MVP\* (small sub-features the MVP needs; confirm or veto at approval):**
+**MVP\* (small sub-features the MVP needs; approved 2026-11-04):**
 
 | Sub-feature | Why it is needed |
 |---|---|
 | New finds auto-fill empty unlocked pedestals; a "Place Best" button | Without it, a mobile player must hand-place every find. It's the "place" half of place/remove. |
 | Sell a treasure (10 s of its base income) and a 300-entry inventory cap | Keeps the profile bounded (§11) and lets players clear junk. |
 | Settings toggle "Reduce screen shake" | Accessibility for the reveal cinematic. |
-| AnalyticsService funnel + economy events (§14) | Measures whether the MVP works. *Optional*; flagged in Open Question 6. |
+| AnalyticsService funnel + economy events (§14) | Measures whether the MVP works. Moved into the MVP. |
+
+### 0.1 Checkpoint 1 decisions (2026-11-04)
+
+| # | Question | Decision | Where it lands |
+|---|---|---|---|
+| 1 | MVP segment | **Pets** | §4 |
+| 2 | Dev UserId | **422765950** | §12 `DevService` |
+| 3 | ForgeGUI budget and style | **10,000 credits**; "Sunny Toybox" approved | §13 |
+| 4 | Rebirth and treasures | **Keep all treasures** | §7; sim re-run in §8.4 (pacing almost unchanged) |
+| 5 | MVP\* helpers | **Yes** (auto-fill + Place Best, Sell + 300 cap, Reduce shake) | §0 |
+| 6 | Analytics + onboarding forced finds | **Moved into the MVP** | §9.5, §14 |
+| 7 | Server size | **8 players / 8 plots** | §6 |
+| 8 | Codes | Launch code **`SEEKATREASURE`**; **live** like counter preferred | §9.7 |
+
+**Still open before Phase 2 can start:**
+
+| Item | Why it blocks | Options |
+|---|---|---|
+| Explicit go-ahead | Hard rule: no game code without written approval | Reply "Phase 1 approved, start Phase 2" |
+| Roblox Studio MCP | Not reachable from the cloud session | Run Phase 2 in Claude Code on the computer that has Studio open, with the Studio MCP added there |
+| ForgeGUI 3D generation | Locked on the current plan | Upgrade the plan, or choose an alternative for models |
+| Live like counter | Needs **Allow HTTP Requests** (an Experience setting) and a proxy, because `HttpService` can't call roblox.com directly | (a) public third-party proxy (RoProxy); (b) a small proxy you host (e.g., a Cloudflare Worker). Either needs your approval. |
+| `SEEKATREASURE` reward | Not specified | Default: 2 Luck Potions + 2 Cash Potions |
+| ForgeGUI → Roblox upload | Connection `@GavinForReal` is `needs_validation / asset_permission_missing` | Re-validate the API key with asset permissions in ForgeGUI |
 
 ---
 
@@ -58,14 +82,14 @@
 | 7. Spend | Shop: tools, potions, slots, segment gates | Validates and prices every purchase on the server |
 | 8. Rebirth | Big confirm screen with the permanent reward | Resets per §7 and grants permanent multipliers |
 
-### 1.2 First 60 seconds (full design; forced finds are Backlog, see §9.5)
+### 1.2 First 60 seconds (MVP, Pets)
 
 | Time | Beat | Design intent |
 |---|---|---|
 | 0–5 s | Spawn on your auto-claimed plot (your name and avatar on the arch). A glowing pawprint trail leads 30 studs to Pawprint Meadow. | Zero menus. One obvious direction. |
 | ~8 s | Enter the meadow: the whistle tweets and the search ring starts (3.0 s per search). | Searching needs no tapping. |
 | ~11 s | First find (a Common) shows as a toast and auto-fills pedestal 1. "+1 $/s" floats up. | Shows the loop: find → place → earn. |
-| ~17 s | Search #3 is a guaranteed Uncommon+ (Backlog). | Early variety. |
+| ~17 s | Search #3 is a guaranteed Uncommon+. | Early variety. |
 | ~32 s | Search #8 is a guaranteed Rare+. Blue card-flip reveal plus a chime. | Guaranteed "first big find" inside 2 minutes (sim: p90 32 s). |
 | ~40 s | The HUD vault pulses: "Vault $410: Collect!" with an arrow to the pad. | Teaches the plot walk. |
 | ~50 s | Shop button glows: "Buy Wooden Whistle ($1,000)". Sim median for the first upgrade is 50 s. | First purchase in the first minute. |
@@ -395,10 +419,10 @@ Plot slot ladder:
 | Cost (full game) | `$2.5B × 12^R` (R = rebirths done): $2.5B, $30B, $360B, $4.32T, $51.8T, … |
 | Cost (MVP, Pets only) | `$400M × 12^R`: $400M, $4.8B, $57.6B, … Same 3 h target with one segment. Switches to the full-game table when segment 2 ships. |
 | Requirement | Cash ≥ cost. Confirm screen lists exactly what you keep and lose. |
-| Resets | Cash, vault, all tools (back to T1), segment unlocks (back to Pets), plot slots (back to 6), Common–Legendary treasures (inventory and plot) |
-| Kept | **Mythic+ treasures ("Heirlooms")**, Index and its luck bonuses, rebirth count, pity counters, potions (timers keep running), codes redeemed, streak, stats/rarest find, gamepasses |
+| Resets | Cash, vault, all tools (back to T1), segment unlocks (back to Pets), plot slots (back to 6). Treasures on slots 7+ go back to inventory; Place Best refills them as slots are rebought. |
+| Kept | **All treasures**, inventory and plot (decision 2026-11-04). Also kept: Index and its luck bonuses, rebirth count, pity counters, potions (timers keep running), codes redeemed, streak, stats/rarest find, gamepasses. |
 | Permanent reward per rebirth | **+50% cash** (`1 + 0.5·R`, additive) and **+10% luck** (`1 + 0.1·R`, additive with Index bonus) |
-| Feel | Heirlooms make every run after the first faster (sim: 2nd rebirth about 1.35 h after the 1st), while the 12x cost growth stretches later runs (3rd about 4 h after the 2nd in a 60-run tuning pass). |
+| Feel | Keeping the whole collection makes every run after the first faster (sim: 2nd rebirth about 1.3 h after the 1st), while the 12x cost growth stretches later runs (3rd about 4 h after the 2nd in an 80-run tuning pass). Keeping everything instead of only Mythic+ barely changes pacing (2nd rebirth 4.47 h vs 4.51 h): only your best 6–20 treasures earn, and by then those are Mythic+ anyway. |
 
 ---
 
@@ -442,7 +466,7 @@ Cash is a double. All math happens server-side and NaN/inf are rejected before e
 |---|---|---|
 | First upgrade | **45–75 s** (aim 60 s) | Mobile players decide in the first minute. A purchase inside it completes the loop (find → place → collect → buy) and teaches every system once. |
 | Second segment (Fish) | **25–35 min** (aim 30 min) | About one long mobile session. New-area novelty lands at the end of session 1 for engaged players and in session 2 for casuals, a reason to come back on Day 1. |
-| First rebirth | **2.5–3.5 h** (aim 3 h) | Mid-term hook: casual players (about 45 min/day) reach it around Day 3, engaged players on Day 1–2. Before D7, players have seen rebirth, kept their Heirlooms, and felt a faster second run. |
+| First rebirth | **2.5–3.5 h** (aim 3 h) | Mid-term hook: casual players (about 45 min/day) reach it around Day 3, engaged players on Day 1–2. Before D7, players have seen rebirth, kept their whole collection, and felt a faster second run. |
 
 ### 8.4 Simulation results
 
@@ -467,9 +491,9 @@ Run with `python3 tools/economy_sim.py --runs 200 --rolls 1000000` (≈4 min). F
 | Fish unlocked | 22.3 min | 34.9 min | 45.9 min |
 | Cars unlocked | 83.0 min | 2.06 h | 2.71 h |
 | First rebirth | 2.10 h | 3.16 h | 4.03 h |
-| Second rebirth | 3.07 h | 4.51 h | 5.69 h |
+| Second rebirth | 3.06 h | 4.47 h | 5.65 h |
 
-**Potion user (keeps Cash + Luck potions running):** Fish 34.3 min, Cars 104.6 min, first rebirth **2.50 h**, second 3.29 h. Potions are worth buying but not required.
+**Potion user (keeps Cash + Luck potions running):** Fish 34.3 min, Cars 104.6 min, first rebirth **2.50 h**, second 3.28 h. Potions are worth buying but not required.
 
 **MVP build (Pets only):** Legendary+ 5.3 min, Mythic+ 19.3 min, rebirth 3.19 h, second rebirth 7.99 h (189/200 within 12 h).
 
@@ -484,15 +508,15 @@ Run with `python3 tools/economy_sim.py --runs 200 --rolls 1000000` (≈4 min). F
 | 1 h | 51,400 | 19 | T7 | Fish | 0 |
 | 2 h | 298,950 | 20 | T7 | Fish | 0 |
 | 3 h | 2,255,000 | 20 | T7 | Cars | 0 |
-| 4 h | 8,156,250 | 20 | T7 | Cars | 1 |
+| 4 h | 8,325,000 | 20 | T7 | Cars | 1 |
 
 **Calendar scenarios (offline earnings 50%, 2 h cap between sessions):**
 
 | Profile | Day 1 | Day 3 | Day 7 | First rebirth (median day) |
 |---|---|---|---|---|
-| Casual: 2 sessions/day (20 + 25 min) | 0 rebirths, 2 segments, 49K/s | 1 rebirth, 3 segments, 2.8M/s | 3 rebirths, 4 segments, 105M/s | Day 3.4 (p10 2.4, p90 4.0) |
-| Engaged: 4 sessions/day (2.25 h incl. AFK) | 1 rebirth, 3 segments, 2.2M/s | 3 rebirths, 4 segments, 172M/s | 5 rebirths, 4 segments, 2.0B/s | Day 1.6 (p10 1.6, p90 2.0) |
-| Engaged, MVP build | 0 rebirths, 68K/s | 2 rebirths, 424K/s | 3 rebirths, 1.5M/s | Day 2.0 (p10 1.6, p90 2.2) |
+| Casual: 2 sessions/day (20 + 25 min) | 0 rebirths, 2 segments, 49K/s | 1 rebirth, 3 segments, 3.2M/s | 3 rebirths, 4 segments, 110M/s | Day 3.4 (p10 2.4, p90 4.0) |
+| Engaged: 4 sessions/day (2.25 h incl. AFK) | 1 rebirth, 3 segments, 2.2M/s | 3 rebirths, 4 segments, 156M/s | 5 rebirths, 4 segments, 2.0B/s | Day 1.6 (p10 1.6, p90 2.0) |
+| Engaged, MVP build | 0 rebirths, 70K/s | 2 rebirths, 425K/s | 3 rebirths, 1.5M/s | Day 2.0 (p10 1.6, p90 2.2) |
 
 **Model assumptions:**
 
@@ -501,8 +525,8 @@ Run with `python3 tools/economy_sim.py --runs 200 --rolls 1000000` (≈4 min). F
 | Movement | 8 s spawn → zone walk. Always searches in the highest unlocked segment. |
 | Collecting | First collect ≥ 40 s (tutorial). After that, collects when vault + cash ≥ the cheapest next purchase, 20–120 s apart. Each trip costs 6 s of searching. |
 | Spending | Buys the cheapest available of next tool / next slot / next segment. Rebirths as soon as affordable. |
-| Placement | Highest-income treasures fill the slots. Finds outside the best 20 (plus Heirlooms) are sold for 10 s of income. |
-| Included | Pity, mutations, Index luck milestones, rebirth bonuses and Heirlooms; onboarding forced finds (full design only) |
+| Placement | Highest-income treasures fill the slots. Finds outside the best 20 are sold for 10 s of income, except Mythic+, which are never auto-sold. |
+| Included | Pity, mutations, Index luck milestones, rebirth bonuses, keep-all-treasures rebirth; onboarding forced finds (full-design rows only) |
 | Excluded | Friend boost, gamepasses, codes, Storm, enhancements; potions (except the potion-user run) |
 
 **Tuning log:**
@@ -513,6 +537,7 @@ Run with `python3 tools/economy_sim.py --runs 200 --rolls 1000000` (≈4 min). F
 | 2 | Rebirth $2.5B ×12; Whistle $350; slot $500; beginner luck removed (40 runs) | 30 s | 29.3 min | 2.92 h |
 | 3 | Modeled the spawn walk and tutorial collect; Whistle and slot $750 (200 runs) | 44 s (just under target) | 32.4 min | 3.11 h |
 | 4 (final) | Whistle and first slot $1,000 (200 runs) | **50 s** | **34.9 min** | **3.16 h** |
+| 5 | Rebirth keeps all treasures (Checkpoint 1 decision; 200 runs) | 50 s | 34.9 min | 3.16 h (2nd rebirth 4.47 h, was 4.51 h) |
 | MVP | Pets-only rebirth cost sweep (40 runs): $50M → 1.6 h, $150M → 2.1 h, **$400M → 3.0 h** (chosen) | — | — | — |
 
 ---
@@ -564,9 +589,9 @@ Mutations add a second "+GOLDEN!" stamp beat (+0.5 s). "Reduce screen shake" set
 
 Counters are global (all segments), saved, and kept on rebirth. The HUD shows the nearest one: "Legendary+ in 312". Divine+ has no pity, so it stays special and the economy stays safe.
 
-### 9.5 Onboarding luck and tutorial (Backlog; recommended fast-follow)
+### 9.5 Onboarding luck and tutorial (MVP)
 
-Search #3 is forced Uncommon+ and search #8 is forced Rare+ (about 32 s in). The tutorial has 5 arrow steps: walk → watch → collect → buy → back. Skippable, under 60 s (§1.2). The full-design sim includes it; the MVP sim doesn't.
+Search #3 is forced Uncommon+ and search #8 is forced Rare+ (about 32 s in). The tutorial has 5 arrow steps: walk → watch → collect → buy → back. Skippable, under 60 s (§1.2). The full-design sim includes it. The "MVP build" sim rows were run without it, so the real MVP's first minute will be slightly faster (first Rare+ by 32 s at p90, instead of 68 s).
 
 ### 9.6 Treasure Storm (Backlog)
 
@@ -578,9 +603,9 @@ Global ×2 luck plus a storm skybox for 10 min every 2 h. Active when `os.time()
 |---|---|---|
 | Friend boost | +10% cash per friend in the server, capped at +50% (5 friends). Server checks `Player:IsFriendsWith` on join/leave, cached per pair. HUD chip "👥 +30%". | **MVP** |
 | Group reward | +5% cash while a member, plus a one-time 3 Luck Potions. Verified on the server with `Player:IsInGroupAsync(groupId)` on join and via a "Verify" button (rate-limited, 1 per 30 s). | Backlog |
-| Codes | Code strings live **server-only** (`ServerStorage`), so they can't be datamined. Input is trimmed, case-insensitive, 1–20 characters, `[A-Za-z0-9]`. Each code has a reward and an optional expiry; once per profile. Brute-force guard: 10 failures per 10 min → 10-min cooldown. | **MVP** |
-| "Next code at X likes" board | In-world board by spawn. MVP shows **static text from Config** ("Next code at 1,000 likes! 👍"), updated when you release a code. | **MVP** (static) |
-| Live like/visit counter | Needs `HttpService` plus an external proxy (Roblox domains can't be called directly). Needs your approval as a third-party service. | Backlog |
+| Codes | Code strings live **server-only** (`ServerStorage`), so they can't be datamined. Input is trimmed, case-insensitive, 1–20 characters, `[A-Za-z0-9]`. Each code has a reward and an optional expiry; once per profile. Brute-force guard: 10 failures per 10 min → 10-min cooldown. **Launch code: `SEEKATREASURE`** (default reward 2 Luck + 2 Cash Potions until you pick one). | **MVP** |
+| "Next code at X likes" board | In-world board by spawn: "👍 12,345 / 15,000 likes, next code at 15K!" Milestones come from Config. If the live count is unavailable, it falls back to static text. | **MVP** |
+| Live like/visit counter | `LikeCounterService` polls the experience's up-votes (and visits) every 5 min per server, caches the value, and pushes it to the board. Needs **Allow HTTP Requests** (Experience setting) and a proxy, because `HttpService` can't call roblox.com directly. Options: a public proxy (RoProxy) or one you host. Both need your approval before I touch them. | **MVP** (pending approval) |
 
 ### 9.8 Playtime gifts, daily streak, leaderboards (Backlog)
 
@@ -756,8 +781,9 @@ ServerScriptService/Server/
     CodeService.luau
     SocialService.luau      -- friend boost
     AnnounceService.luau    -- Mythic+ banner
-    TelemetryService.luau   -- AnalyticsService wrapper (MVP* optional)
-    DevService.luau         -- Studio-only, single UserId
+    TelemetryService.luau   -- AnalyticsService wrapper (MVP)
+    LikeCounterService.luau -- live like count for the code board (pending HTTP + proxy approval)
+    DevService.luau         -- Studio-only, UserId 422765950
   Util/ RateLimiter.luau, Guard.luau, Retry.luau, Signal.luau
 ServerStorage/
   Secrets/Codes.luau        -- code strings + rewards (never replicated)
@@ -863,11 +889,26 @@ Count: 12 per segment, **12 in the MVP** and 36 in the Backlog. Pipeline: `gener
 | Thumbnail B "The Plot" | 1920×1080 | A plot packed with glowing mutated treasures on pedestals at golden hour |
 | Thumbnail C "Four Worlds" | 1920×1080 | Diagonal 4-way split: Meadow, Lagoon, Scrapyard, Shrine, each with its Mythic |
 
-**Generation estimate (MVP):** about 12 models + 19 props/pedestals + about 50 GUI images + 13 SFX + 4 key art ≈ **98 generations**, with up to ×1.5 for retries. The credit cost per generation isn't exposed by the free ForgeGUI reads, so **I need your credit budget** before any paid call (Open Question 3).
+**Generation estimate (MVP):** about 12 models + 19 props/pedestals + about 50 GUI images + 13 SFX + 4 key art ≈ **98 generations**, with up to ×1.5 for retries. Budget: **10,000 credits** (approved). ForgeGUI job results don't show a credit amount (billing is deferred), so spend is tracked on the ForgeGUI dashboard.
+
+### 13.6 Style test (2026-11-04)
+
+Style identity **Sunny Toybox**: `771db88d-81d1-41e5-9e05-cc70571707ec`, v1. ForgeGUI run: `974c4428-9111-4352-b24b-a6ae673d047f`.
+
+| # | Asset | Tool | Result | Artifact |
+|---|---|---|---|---|
+| 1 | Shop HUD icon | `generation_gui` (icon) | ✅ generated | [image](https://azyjlkhpdgafuobyxoax.supabase.co/storage/v1/object/public/asset-images/ddbf3f20-babe-49f8-8941-ee1ca2e76629/mcp/1cff7c6a-0fb5-4e90-9386-3afe297fcaac-0.png) · `mcp-artifact:1cff7c6a-0fb5-4e90-9386-3afe297fcaac:0` |
+| 2 | Legendary rarity frame | `generation_gui` (frame) | ✅ generated | [image](https://azyjlkhpdgafuobyxoax.supabase.co/storage/v1/object/public/asset-images/ddbf3f20-babe-49f8-8941-ee1ca2e76629/mcp/dda4c44b-84d6-459e-ac1c-362e63fff676-0.png) · `mcp-artifact:dda4c44b-84d6-459e-ac1c-362e63fff676:0` |
+| 3 | Shop panel | `generation_gui` (panel) | ✅ generated | [image](https://azyjlkhpdgafuobyxoax.supabase.co/storage/v1/object/public/asset-images/ddbf3f20-babe-49f8-8941-ee1ca2e76629/mcp/88cb1436-dd93-4909-91fd-8e2de7511785-0.png) · `mcp-artifact:88cb1436-dd93-4909-91fd-8e2de7511785:0` |
+| 4 | Toasty Corgi (Rare) | `generation_model_3d` | ⛔ refused: `paid_generation_required` | — |
+| 5 | Crystal Dragonling (Mythic) | `generation_model_3d` | ⛔ refused: `paid_generation_required` | — |
+| 6 | Gold pedestal | `generation_model_3d` | ⛔ refused: `paid_generation_required` | — |
+
+This cloud session's network policy blocks the image host, so the three images still need **your** visual review. The 3D half of the test reruns after the plan upgrade.
 
 ---
 
-## 14. Analytics (AnalyticsService)
+## 14. Analytics (AnalyticsService, MVP)
 
 ### 14.1 Onboarding funnel (`LogOnboardingFunnelStepEvent`, once per player)
 
@@ -908,7 +949,8 @@ Custom/progression events (low cardinality): `RareFind` (rarity ≥ Mythic, segm
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| **Studio MCP not connected** (Phase 2 blocker) | Can't build or test | Connect it to a session that can reach Studio (see the checkpoint reply) |
+| **Studio MCP not connected** (Phase 2 blocker) | Can't build or test | Run Phase 2 in Claude Code on the computer that has Studio |
+| **ForgeGUI 3D locked on the current plan** (Phase 2 blocker) | No treasure models, props or pedestals | Upgrade the plan; no 3D calls until then |
 | ForgeGUI publish connection invalid | Generated models can't be uploaded | Fix the API-key permissions in ForgeGUI `/forge-mcp`; I ask before any upload |
 | IP resemblance (Anime, Cars) | Takedown / moderation | Guardrail prompts (§4.2), human review, Pets first |
 | Style drift across ~100 generations | Looks cheap, hurts virality | One ForgeGUI style id + reference images; a 6-asset style test before bulk generation |
@@ -919,13 +961,6 @@ Custom/progression events (low cardinality): `RareFind` (rarity ≥ Mythic, segm
 | Paid random items | Compliance | Odds shown, PolicyService gate that fails closed (§10.3) |
 | MVP rebirth cost changes when Fish ships | Early rebirths feel cheap | Keep the MVP private/test-only, or accept and message it |
 
-### 15.2 Open questions for you (8)
+### 15.2 Open questions
 
-1. **MVP segment:** approve **Pets** (my recommendation), or pick Fish/Cars/Anime?
-2. **Dev UserId:** is it **422765950** (the creator id on your ForgeGUI connection `@GavinForReal`)? Dev commands will only exist in Studio, for that one id.
-3. **ForgeGUI budget and style:** what is the credit budget, and do you approve "Sunny Toybox" (§13.1)? I'd spend a small style test (6 assets) first.
-4. **Rebirth keeps Mythic+ ("Heirlooms"):** OK, or should everything reset?
-5. **MVP\* sub-features:** OK to include auto-fill + Place Best, Sell + the 300-item cap, and Reduce-shake?
-6. **Analytics and onboarding:** should the AnalyticsService funnel and the forced Rare+ onboarding (both cheap) move from Backlog into the MVP?
-7. **Server size:** 8 players / 8 plots OK?
-8. **Codes:** which launch code(s) and rewards? Is a static "next code at X likes" board (updated by you) OK for the MVP, instead of a live counter via an external proxy?
+All 8 Checkpoint 1 questions were answered on 2026-11-04; see §0.1. The items still open before Phase 2 are listed in §0.1 under "Still open".

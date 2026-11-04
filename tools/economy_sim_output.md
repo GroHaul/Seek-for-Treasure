@@ -45,7 +45,7 @@ Mutation cap check: max over all 6x5 combinations = 10.0x; max over 200,000 forc
 | First Mythic+ | 4.8 min | 19.0 min | 44.3 min | 200/200 |
 | Third segment unlocked (Cars) | 83.0 min | 2.06 h | 2.71 h | 200/200 |
 | **First rebirth** | 2.10 h | 3.16 h | 4.03 h | 200/200 |
-| Second rebirth | 3.07 h | 4.51 h | 5.69 h | 200/200 |
+| Second rebirth | 3.06 h | 4.47 h | 5.65 h | 200/200 |
 
 ### Active play, full design, buys Cash + Luck potions (200 runs)
 
@@ -60,7 +60,7 @@ Mutation cap check: max over all 6x5 combinations = 10.0x; max over 200,000 forc
 | First Mythic+ | 4.8 min | 19.0 min | 34.7 min | 200/200 |
 | Third segment unlocked (Cars) | 77.3 min | 104.6 min | 2.22 h | 200/200 |
 | **First rebirth** | 112.8 min | 2.50 h | 3.10 h | 200/200 |
-| Second rebirth | 2.50 h | 3.29 h | 4.02 h | 200/200 |
+| Second rebirth | 2.50 h | 3.28 h | 4.01 h | 200/200 |
 
 ### Active play, MVP build (Pets only, no onboarding luck), F2P (200 runs)
 
@@ -86,15 +86,15 @@ Mutation cap check: max over all 6x5 combinations = 10.0x; max over 200,000 forc
 | 60.0 min | 51,400 | 19 | T7 | fish | 0 |
 | 2.00 h | 298,950 | 20 | T7 | fish | 0 |
 | 3.00 h | 2,255,000 | 20 | T7 | cars | 0 |
-| 4.00 h | 8,156,250 | 20 | T7 | cars | 1 |
+| 4.00 h | 8,325,000 | 20 | T7 | cars | 1 |
 
 ### Calendar scenario: Casual - 2 sessions/day (20 + 25 min) (100 runs, 4 segment(s))
 
 | Day | Median rebirths | Median segments unlocked | Median cash/sec at end of day |
 |---|---|---|---|
 | Day 1 | 0 | 2 | 48,950 |
-| Day 3 | 1 | 3 | 2,769,750 |
-| Day 7 | 3 | 4 | 105,175,000 |
+| Day 3 | 1 | 3 | 3,225,000 |
+| Day 7 | 3 | 4 | 109,962,500 |
 
 First rebirth reached by 100/100 players; median on day 3.4 (p10 2.4, p90 4.0).
 
@@ -102,9 +102,9 @@ First rebirth reached by 100/100 players; median on day 3.4 (p10 2.4, p90 4.0).
 
 | Day | Median rebirths | Median segments unlocked | Median cash/sec at end of day |
 |---|---|---|---|
-| Day 1 | 1 | 3 | 2,182,500 |
-| Day 3 | 3 | 4 | 172,250,000 |
-| Day 7 | 5 | 4 | 1,971,375,000 |
+| Day 1 | 1 | 3 | 2,241,750 |
+| Day 3 | 3 | 4 | 155,875,000 |
+| Day 7 | 5 | 4 | 1,977,500,000 |
 
 First rebirth reached by 100/100 players; median on day 1.6 (p10 1.6, p90 2.0).
 
@@ -112,8 +112,8 @@ First rebirth reached by 100/100 players; median on day 1.6 (p10 1.6, p90 2.0).
 
 | Day | Median rebirths | Median segments unlocked | Median cash/sec at end of day |
 |---|---|---|---|
-| Day 1 | 0 | 1 | 67,875 |
-| Day 3 | 2 | 1 | 424,250 |
+| Day 1 | 0 | 1 | 70,250 |
+| Day 3 | 2 | 1 | 424,750 |
 | Day 7 | 3 | 1 | 1,507,188 |
 
 First rebirth reached by 100/100 players; median on day 2.0 (p10 1.6, p90 2.2).

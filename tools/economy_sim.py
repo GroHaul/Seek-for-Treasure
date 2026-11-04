@@ -95,7 +95,8 @@ REBIRTH_GROWTH = 12
 MVP_REBIRTH_BASE_COST = 400_000_000  # Pets-only MVP build (one segment), tuned to the same 3 h target
 REBIRTH_CASH_BONUS = 0.5  # +50% cash per rebirth (additive)
 REBIRTH_LUCK_BONUS = 0.10  # +10% luck per rebirth (additive)
-KEEP_ON_REBIRTH_MIN_RARITY = MYTHIC  # Mythic+ treasures are kept
+NEVER_AUTOSELL_MIN_RARITY = MYTHIC  # inventory overflow never auto-sells Mythic+
+KEEP_ALL_TREASURES_ON_REBIRTH = True  # decision 2026-11-04: rebirth keeps every treasure
 
 
 def rebirth_cost(rebirths: int) -> float:
@@ -299,7 +300,7 @@ class Player:
             # keep top MAX_SLOTS plus any heirlooms; sell the rest
             keep, sell = [], []
             for i, x in enumerate(self.owned):
-                (keep if i < MAX_SLOTS or x.tier >= KEEP_ON_REBIRTH_MIN_RARITY else sell).append(x)
+                (keep if i < MAX_SLOTS or x.tier >= NEVER_AUTOSELL_MIN_RARITY else sell).append(x)
             self.owned = keep
             self.vault += sum(x.income for x in sell) * SELL_SECONDS
 
@@ -365,7 +366,8 @@ class Player:
         self.seg = 0
         self.tools = [0, 0, 0, 0]
         self.slots = START_SLOTS
-        self.owned = [x for x in self.owned if x.tier >= KEEP_ON_REBIRTH_MIN_RARITY]
+        if not KEEP_ALL_TREASURES_ON_REBIRTH:
+            self.owned = [x for x in self.owned if x.tier >= NEVER_AUTOSELL_MIN_RARITY]
 
     def next_target(self, allow_rebirth: bool) -> float:
         items = [p for _, p in self.price_list()]
