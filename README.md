@@ -24,7 +24,7 @@ rojo serve --port 34872
 
 Then click **Connect** in the Rojo plugin in Studio.
 
-Without a published place, Studio has no DataStore access, so `DataService` falls back to an in-memory `MockStore` (printed in Output; nothing persists between playtests). Live servers always use the real DataStore.
+The place is published, so Studio playtests use the real DataStore (`SFT_Profiles_v1`) when **File → Experience Settings → Security → Enable Studio Access to API Services** is on and Studio is signed in. Studio and live servers share that store, so a Studio playtest writes to your real save. Without access (or with the `ServerStorage` attribute `SFT_UseMockStore = true`), `DataService` falls back to an in-memory `MockStore` (printed in Output; nothing persists between playtests). Live servers always use the real DataStore.
 
 ## Checks
 
@@ -61,7 +61,7 @@ During a playtest, the Studio-only `ServerStorage.SFT_TestHook` BindableFunction
 | Step | Status | Evidence (Studio, 2026-11-07) |
 |---|---|---|
 | 1. Shared Config modules | ✅ | `Config.spec` 110/110; `verify_config.py` 181/181 |
-| 2. DataService | ✅ on the mock store | `SessionStore.spec` 31/31 (lock, stale takeover, lost lock, retries, failed load leaves data unchanged, newer schema read-only, NaN refused, migrations). Live: failing store → 6 tries each for release and load, kick, 0 writes. Real DataStore needs a published place. |
+| 2. DataService | ✅ real DataStore (2026-11-08) | `SessionStore.spec` 31/31 (lock, stale takeover, lost lock, retries, failed load leaves data unchanged, newer schema read-only, NaN refused, migrations). Mock store: failing store → 6 tries each for release and load, kick, 0 writes. **Real DataStore, published place (2026-11-08):** `saveNow` → stored copy matches the live profile; $1,000 added without saving survived Stop (shutdown save), and the whole profile came back identical in a new session under a new server ID (lock released on Stop); a second server (`SessionStore` with another job id) got `locked` after retrying, no data, and its forced write → `lost_lock`, store version unchanged; a stale-lock takeover made the old server's next autosave → `lost_lock`, then read-only, store untouched; the new owner released cleanly and the next session loaded normally. |
 | 3. Search | ✅ | 10 s in zone = 3 searches at 3.0 s; 6 s outside = 0. Forced Uncommon+ on #3 and Rare+ on #8; pity 119/799/4999 → Epic/Legendary/Mythic; luck/interval modifiers and the 25x cap. `RollMath.spec`: 1M rolls all within ±5%, mutation cap 10.0x. |
 | 4. Plot | ✅ (single client) | Claim + spawn on plot, auto-fill, Place Best, place/remove validation, vault accrual at server rate, own-pad collect only, offline 1 h = base × 3600 × 50%, 10 h capped at 2 h, Cash potion excluded; data survives a simulated rejoin. |
 | 5. Shop, potions, rebirth, codes | ✅ (single client) | All fired from the real client. Tools: next tier only, exact price, equip-lower is cosmetic. Slots: $1,000 → $2,250, new slots auto-fill. Potions: price = max(min, seconds × base income), +10 min per buy, refused past 60 min (no charge). Rebirth: $1 short refused; double-fire = 1 rebirth; resets cash/vault/tools/slots, keeps treasures/pity/potions/stats; next cost $4.8B. Codes: `SEEKATREASURE` trimmed + case-insensitive → 2 Luck + 2 Cash doses; reuse refused; 10 failures → 10-min lockout. |

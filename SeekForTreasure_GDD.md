@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | **Phase 2 in progress** (approved 2026-11-04). Steps 1–7 built and verified in Studio on 2026-11-07 (single client, mock DataStore); ForgeGUI art and sounds still blocked; see the README status table. |
+| Status | **Phase 2 in progress** (approved 2026-11-04). Steps 1–7 built and verified in Studio on 2026-11-07 (single client); saving verified on the real DataStore in the published place on 2026-11-08; ForgeGUI art and sounds still blocked; see the README status table. |
 | Version | GDD v1.0, 2026-11-04 |
 | Genre | Idle RNG collection tycoon (auto-search → reveal → place → earn → upgrade → rebirth) |
 | Platform focus | Roblox, mobile first (landscape phone), desktop/tablet/console supported |
@@ -58,7 +58,7 @@
 
 | Item | Why it blocks | Options |
 |---|---|---|
-| Published test place + Studio API access | Real DataStore persistence (acceptance: "persist across rejoin in the published test place") | Until then `DataService` uses an in-memory MockStore in Studio (decision 2026-11-07) |
+| ~~Published test place + Studio API access~~ | Real DataStore persistence (acceptance: "persist across rejoin in the published test place") | **Resolved 2026-11-08:** place published, Studio API access on; persistence, shutdown save and session locking verified on the real DataStore (README step 2) |
 | Server size 8 | Plots are 8 per server; `Players.MaxPlayers` is an Experience setting | Set server size to 8 in Game Settings when publishing |
 | ForgeGUI 3D generation | Locked on the current plan | Upgrade the plan, or choose an alternative for models |
 | Live like counter | Needs **Allow HTTP Requests** (an Experience setting) and a proxy, because `HttpService` can't call roblox.com directly | (a) public third-party proxy (RoProxy); (b) a small proxy you host (e.g., a Cloudflare Worker). Either needs your approval. |
