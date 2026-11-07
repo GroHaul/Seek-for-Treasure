@@ -41,7 +41,7 @@ local function onPlayerAdded(player: Player)
 	friendPairs[player] = friendPairs[player] or {}
 	for _, other in Players:GetPlayers() do
 		if other ~= player then
-			local ok, isFriend = pcall(player.IsFriendsWith, player, other.UserId)
+			local ok, isFriend = pcall(player.IsFriendsWithAsync, player, other.UserId)
 			if ok and player.Parent and other.Parent then
 				friendPairs[player][other] = isFriend
 				friendPairs[other] = friendPairs[other] or {}

@@ -19,6 +19,7 @@ local Types = require(Shared.Types)
 local Config = Shared.Config
 local PlotConfig = require(Config.Plot) :: Types.PlotConfig
 local Upgrades = require(Config.Upgrades) :: Types.UpgradesConfig
+local Social = require(Config.Social) :: Types.SocialConfig
 
 local ZONE_HEIGHT = 16
 local MEADOW_SIZE = 60
@@ -180,6 +181,45 @@ local function buildMeadow(world: Folder)
 	segments.Parent = world
 end
 
+-- "Next code at X likes" board (GDD §9.7). The live like counter is off until
+-- HTTP + a proxy are approved, so it shows the fallback text.
+local function buildCodeBoard(world: Folder)
+	local board = part({
+		Name = "CodeBoard",
+		Size = Vector3.new(16, 9, 0.8),
+		CFrame = CFrame.new(MEADOW_SIZE / 2 + 14, 6.5, 0) * CFrame.Angles(0, math.rad(-90), 0),
+		Color = PALETTE.cream,
+		Parent = world,
+	})
+	for _, sx in { -7, 7 } do
+		part({ Name = "Post", Size = Vector3.new(1, 6, 1), CFrame = board.CFrame * CFrame.new(sx, -6, 0), Color = PALETTE.ink, Parent = board })
+	end
+	local gui = Instance.new("SurfaceGui")
+	gui.Face = Enum.NormalId.Front
+	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	gui.PixelsPerStud = 40
+	gui.LightInfluence = 0
+	local title = Instance.new("TextLabel")
+	title.BackgroundTransparency = 1
+	title.Size = UDim2.fromScale(1, 0.45)
+	title.Font = Enum.Font.FredokaOne
+	title.TextScaled = true
+	title.TextColor3 = PALETTE.coral
+	title.Text = "🎁 CODES"
+	title.Parent = gui
+	local body = Instance.new("TextLabel")
+	body.Name = "Next"
+	body.BackgroundTransparency = 1
+	body.Position = UDim2.fromScale(0.05, 0.45)
+	body.Size = UDim2.fromScale(0.9, 0.45)
+	body.Font = Enum.Font.FredokaOne
+	body.TextScaled = true
+	body.TextColor3 = PALETTE.ink
+	body.Text = string.gsub(Social.codeBoard.fallbackText, "{n}", string.format("%d", Social.codeBoard.likeMilestones[1]))
+	body.Parent = gui
+	gui.Parent = board
+end
+
 local function plotCFrame(index: number): CFrame
 	local perSide = PlotConfig.plotsPerServer / 2
 	local north = index <= perSide
@@ -252,7 +292,7 @@ local function buildPlot(index: number, parent: Folder): PlotInfo
 		Material = Enum.Material.Neon,
 		Parent = model,
 	})
-	label(padVisual, "Collect $0", UDim2.fromScale(10, 2.5), Vector3.new(0, 4, 0), 80)
+	label(padVisual, "Collect $0", UDim2.fromOffset(170, 40), Vector3.new(0, 3, 0), 80)
 	local padZone = zonePart("CollectZone", padCf * CFrame.new(0, 5, 0), Vector3.new(8, 10, 8), model)
 	padZone:SetAttribute("PlotIndex", index)
 	CollectionService:AddTag(padZone, "SFT_CollectPad")
@@ -329,6 +369,7 @@ function WorldService.init()
 	world.Name = "World"
 	world:SetAttribute("SFT_Managed", true)
 	buildMeadow(world)
+	buildCodeBoard(world)
 
 	local plotsFolder = Instance.new("Folder")
 	plotsFolder.Name = "Plots"

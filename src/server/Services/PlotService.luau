@@ -184,7 +184,7 @@ local function buildTreasure(entry: Types.InventoryEntry, top: CFrame, incomePer
 	applyMutationVisuals(body, entry.mutation)
 	body.Parent = model
 	local mut = mutationText(entry.mutation)
-	local text = makeLabel(body, "Info", UDim2.fromScale(7, 2.6), Vector3.new(0, size / 2 + 1.6, 0), 60)
+	local text = makeLabel(body, "Info", UDim2.fromOffset(150, 54), Vector3.new(0, size / 2 + 1.2, 0), 50)
 	text.Text = string.format(
 		'%s\n<font color="%s">%s</font>%s\n<font color="#3DDC84">%s/s</font>',
 		treasure.name,
@@ -224,7 +224,7 @@ local function refreshVisuals(index: number)
 		end
 		if slot > slots then
 			if slot == slots + 1 and slots < Upgrades.slots.max then
-				local text = makeLabel(ped, "Lock", UDim2.fromScale(6, 1.6), Vector3.new(0, 2.5, 0), 50)
+				local text = makeLabel(ped, "Lock", UDim2.fromOffset(110, 30), Vector3.new(0, 2, 0), 50)
 				text.Text = "🔒 " .. Format.cash(EconomyMath.slotPrice(slots))
 			end
 			continue

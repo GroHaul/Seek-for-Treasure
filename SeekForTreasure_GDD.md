@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | **Phase 2 in progress** (approved 2026-11-04). Steps 1–5 verified in Studio on 2026-11-07; see the README status table. |
+| Status | **Phase 2 in progress** (approved 2026-11-04). Steps 1–5 and the step 6 UI verified in Studio on 2026-11-07; see the README status table. |
 | Version | GDD v1.0, 2026-11-04 |
 | Genre | Idle RNG collection tycoon (auto-search → reveal → place → earn → upgrade → rebirth) |
 | Platform focus | Roblox, mobile first (landscape phone), desktop/tablet/console supported |
@@ -841,6 +841,10 @@ Every handler starts with `RateLimiter.allow` → type check → range/NaN check
 | Icons | 256² transparent PNG, 12% padding, thick Ink outline, 2-tone fill |
 | Lighting | Future, warm sun, light atmosphere, low bloom |
 | Motion | `FAST` 0.15 s Quad, `BOUNCY` 0.3 s Back, `REVEAL` per §9.1 |
+
+### 13.1.1 Phase 2 implementation note (2026-11-07)
+
+The UI is built natively in Luau from these tokens (`src/client/UI/Theme.luau`, `Kit.luau`): cream panels, 3 px Ink strokes, pill buttons, Fredoka One headings, Builder Sans numbers. Layout is authored at a 660 × 336 reference (the smallest landscape phone below the Roblox top bar) and scaled with `UIScale`, clamped 0.75–1.6, so every button is ≥ 48 px from iPhone SE to 1080p. ForgeGUI images slot in through `src/client/UI/Assets.luau` once the publishing connection can upload them; until then each icon falls back to an emoji glyph. Search progress is a bar, not a ring, until the ring image exists.
 
 ### 13.2 UI kit
 

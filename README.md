@@ -46,6 +46,14 @@ require(game.ServerStorage.SFT_Tests["RollMath.spec"]:Clone())()
 require(game.ServerStorage.SFT_Tests["SessionStore.spec"]:Clone())()
 ```
 
+UI layout check (Studio, during a playtest, client side):
+
+```lua
+local gui = game.Players.LocalPlayer.PlayerGui.SFT_UI
+gui:SetAttribute("EmulateViewport", Vector2.new(844, 354)) -- lay out as a landscape phone
+gui:SetAttribute("EmulateZoom", 0.5) -- optional: draw smaller (e.g. to preview 1080p)
+```
+
 During a playtest, the Studio-only `ServerStorage.SFT_TestHook` BindableFunction reads live server state (`profile`, `searching`, `plot`, `rejoin`, `mock`, `dev`, ...). It's created only when `RunService:IsStudio()`.
 
 ## Phase 2 status
@@ -58,5 +66,5 @@ During a playtest, the Studio-only `ServerStorage.SFT_TestHook` BindableFunction
 | 4. Plot | ✅ (single client) | Claim + spawn on plot, auto-fill, Place Best, place/remove validation, vault accrual at server rate, own-pad collect only, offline 1 h = base × 3600 × 50%, 10 h capped at 2 h, Cash potion excluded; data survives a simulated rejoin. |
 | 5. Shop, potions, rebirth, codes | ✅ (single client) | All fired from the real client. Tools: next tier only, exact price, equip-lower is cosmetic. Slots: $1,000 → $2,250, new slots auto-fill. Potions: price = max(min, seconds × base income), +10 min per buy, refused past 60 min (no charge). Rebirth: $1 short refused; double-fire = 1 rebirth; resets cash/vault/tools/slots, keeps treasures/pity/potions/stats; next cost $4.8B. Codes: `SEEKATREASURE` trimmed + case-insensitive → 2 Luck + 2 Cash doses; reuse refused; 10 failures → 10-min lockout. |
 | Remote fuzz (acceptance) | ✅ | 3,798 events across all 14 C→S remotes (wrong types, negatives, NaN/inf, 5,000-char strings, tables, Instances, 400× spam bursts): profile fingerprint identical before/after, no handler errors in Output. |
-| 6. UI and models (ForgeGUI) | Not started | 3D generation is locked on the ForgeGUI plan |
+| 6. UI and models | ✅ UI (native, Sunny Toybox style); ⛔ ForgeGUI art blocked | HUD (cash, income, vault, luck/speed/mutation/friend chips, potion timers, search bar, pity meter), toasts, Welcome-back popup, Shop (Tools/Potions/Upgrades), Bag (place/remove/sell/Place Best), Rebirth confirm, Codes, Settings, 5-step tutorial with arrow beam, code board, client idle bob + hue cycle. Layout audit with `EmulateViewport`: iPhone SE 667×339, iPhone 14 844×354, iPad 1024×732, 1080p 1920×1022 — every button ≥ 48 px (smallest 48.4), no HUD overlaps, every panel fits. Placing Storm Pony from the Bag raised income 35 → 234/s on the server. ~2.5 min soak with panels cycling: no errors. ForgeGUI images can't be used: the Roblox publishing connection is `needs_validation / asset_permission_missing`; 3D generation is locked on the plan. `src/client/UI/Assets.luau` takes the image ids once uploads work; emoji glyphs stand in until then. |
 | 7. Index, reveal, banner, friend boost | Friend boost server side written (`SocialService`), untested with real friends | |

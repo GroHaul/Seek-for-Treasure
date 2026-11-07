@@ -20,10 +20,9 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Types = require(Shared.Types)
 local Net = require(Shared.Net)
 local RollMath = require(Shared.RollMath)
-local EconomyMath = require(Shared.EconomyMath)
+local SearchMath = require(Shared.SearchMath)
 local Signal = require(Shared.Util.Signal)
 local Config = Shared.Config
-local Tools = require(Config.Tools) :: Types.ToolsConfig
 local Pity = require(Config.Pity) :: { Types.PityFloor }
 local Onboarding = require(Config.Onboarding) :: Types.OnboardingConfig
 
@@ -64,23 +63,12 @@ end
 
 local states: { [Player]: State } = {}
 
-local function toolStats(profile: Types.Profile, segmentId: string): Types.ToolTier
-	local tool = profile.tools[segmentId]
-	local tier = if tool then tool.owned else 1
-	return Tools.tiers[math.clamp(tier, 1, #Tools.tiers)]
-end
-
 function SearchService.luckFor(profile: Types.Profile, segmentId: string, now: number): number
-	return EconomyMath.totalLuck(
-		toolStats(profile, segmentId).luck,
-		profile.rebirths,
-		EconomyMath.indexLuckBonus(profile.indexRewards),
-		EconomyMath.potionMult(profile.potions, "luck", now)
-	)
+	return SearchMath.luck(profile, segmentId, now)
 end
 
 function SearchService.intervalFor(profile: Types.Profile, segmentId: string, now: number): number
-	return EconomyMath.searchInterval(toolStats(profile, segmentId).interval, EconomyMath.potionMult(profile.potions, "speed", now))
+	return SearchMath.interval(profile, segmentId, now)
 end
 
 --- Highest rarity floor forced on the next search (1 = none).
@@ -118,7 +106,7 @@ function SearchService.doSearch(player: Player, profile: Types.Profile, segmentI
 	local now = os.time()
 	local luck = SearchService.luckFor(profile, segmentId, now)
 	local floor = SearchService.floorFor(profile)
-	local result = RollMath.roll(rand, segmentId, luck, floor, toolStats(profile, segmentId).mutation, EconomyMath.potionMult(profile.potions, "mutation", now))
+	local result = RollMath.roll(rand, segmentId, luck, floor, SearchMath.mutation(profile, segmentId, now), 1)
 
 	for _, pity in Pity do
 		local pityTable = profile.pity :: any
