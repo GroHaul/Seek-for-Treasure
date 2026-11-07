@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | **Phase 2 in progress** (approved 2026-11-04). Steps 1–7 built and verified in Studio on 2026-11-07 (single client); saving verified on the real DataStore in the published place on 2026-11-08; ForgeGUI art and sounds still blocked; see the README status table. |
+| Status | **Phase 2 in progress** (approved 2026-11-04). Steps 1–7 built and verified in Studio on 2026-11-07; saving, a 2-player test and a 10-minute soak verified on the real DataStore in the published place on 2026-11-08; ForgeGUI art and sounds still blocked; see the README status table. |
 | Version | GDD v1.0, 2026-11-04 |
 | Genre | Idle RNG collection tycoon (auto-search → reveal → place → earn → upgrade → rebirth) |
 | Platform focus | Roblox, mobile first (landscape phone), desktop/tablet/console supported |
