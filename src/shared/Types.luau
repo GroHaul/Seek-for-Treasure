@@ -214,4 +214,61 @@ export type SocialConfig = {
 	likeCounter: { enabled: boolean, pollSeconds: number, proxyBaseUrl: string },
 }
 
+-- Profile (GDD §11.1) ---------------------------------------------------------
+export type InventoryEntry = {
+	id: string, -- treasure id, e.g. "pets_ember_fox"
+	segment: string,
+	rarity: number, -- 1..10
+	mutation: { string }, -- 0..2 ids (one Finish + one Aura max)
+	level: number, -- 1..10 (enhancement; MVP always 1)
+	t: number, -- unix time found
+}
+
+export type Profile = {
+	schema: number,
+	cash: number,
+	vault: number,
+	lifetimeEarned: number,
+	rebirths: number,
+	inventory: { [string]: InventoryEntry }, -- key = uid "t<n>"
+	nextUid: number,
+	plot: { slots: number, layout: { [string]: string } }, -- "1".."24" -> uid
+	tools: { [string]: { owned: number, equipped: number } },
+	segments: { [string]: boolean },
+	potions: { luck: number, speed: number, mutation: number, cash: number }, -- unix expiry, 0 = none
+	pity: { epic: number, legendary: number, mythic: number },
+	index: { [string]: { n: number, m: number } }, -- treasureId -> count found, mutation bitmask
+	indexRewards: { [string]: number }, -- segment -> highest milestone claimed (0..3)
+	codes: { [string]: number }, -- code -> unix time redeemed
+	streak: { day: number, lastDay: number },
+	stats: {
+		searches: number,
+		playtime: number,
+		rarest: { id: string, rarity: number, mutation: { string } }?,
+	},
+	purchases: { [string]: number },
+	settings: { reduceShake: boolean, music: boolean, sfx: boolean },
+	flags: { tutorialDone: boolean },
+	lastOnline: number,
+	_lock: { jobId: string, t: number }?,
+	_legacy: { [string]: any }?,
+}
+
+-- Remote payloads (S -> C) ----------------------------------------------------
+export type SearchStatePayload = {
+	active: boolean,
+	segmentId: string?,
+	interval: number,
+	startedAt: number, -- workspace:GetServerTimeNow() when the current search began
+}
+
+export type RevealPayload = {
+	uid: string?, -- nil when the find was auto-sold (inventory full)
+	treasureId: string,
+	rarity: number,
+	mutation: { string },
+	soldFor: number?,
+	pity: { id: string, remaining: number }?, -- nearest pity floor after this find
+}
+
 return nil

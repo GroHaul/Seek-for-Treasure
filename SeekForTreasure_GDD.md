@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | **Checkpoint 1 answered on 2026-11-04 (decisions in §0.1). Waiting for an explicit go-ahead for Phase 2. No game code has been written.** |
+| Status | **Phase 2 in progress** (approved 2026-11-04). Steps 1–4 verified in Studio on 2026-11-07; see the README status table. |
 | Version | GDD v1.0, 2026-11-04 |
 | Genre | Idle RNG collection tycoon (auto-search → reveal → place → earn → upgrade → rebirth) |
 | Platform focus | Roblox, mobile first (landscape phone), desktop/tablet/console supported |
@@ -11,7 +11,7 @@
 | MVP segment | **Pets** (Pawprint Meadow), approved |
 
 > **Environment blockers for Phase 2 (found during setup).**
-> 1. **Roblox Studio MCP is not connected to this session.** ForgeGUI MCP responds (free reads OK). Phase 2 can't build or test in Studio until it is.
+> 1. ~~Roblox Studio MCP is not connected.~~ Resolved 2026-11-07: Phase 2 runs locally with the Studio MCP and Rojo live sync.
 > 2. **ForgeGUI → Roblox publishing connection `@GavinForReal` shows `needs_validation / asset_permission_missing`.** Models and images can be generated but not uploaded to Roblox until the API key gets asset permissions.
 > 3. **ForgeGUI 3D model generation is locked on the current plan** (`paid_generation_required`). GUI images work. Every treasure model, prop and pedestal needs a plan upgrade (https://forgegui.com/plans).
 
@@ -58,8 +58,8 @@
 
 | Item | Why it blocks | Options |
 |---|---|---|
-| Explicit go-ahead | Hard rule: no game code without written approval | Reply "Phase 1 approved, start Phase 2" |
-| Roblox Studio MCP | Not reachable from the cloud session | Run Phase 2 in Claude Code on the computer that has Studio open, with the Studio MCP added there |
+| Published test place + Studio API access | Real DataStore persistence (acceptance: "persist across rejoin in the published test place") | Until then `DataService` uses an in-memory MockStore in Studio (decision 2026-11-07) |
+| Server size 8 | Plots are 8 per server; `Players.MaxPlayers` is an Experience setting | Set server size to 8 in Game Settings when publishing |
 | ForgeGUI 3D generation | Locked on the current plan | Upgrade the plan, or choose an alternative for models |
 | Live like counter | Needs **Allow HTTP Requests** (an Experience setting) and a proxy, because `HttpService` can't call roblox.com directly | (a) public third-party proxy (RoProxy); (b) a small proxy you host (e.g., a Cloudflare Worker). Either needs your approval. |
 | `SEEKATREASURE` reward | Not specified | Default: 2 Luck Potions + 2 Cash Potions |
@@ -698,6 +698,7 @@ type Profile = {
     stats: { searches: number, playtime: number, rarest: { id: string, rarity: number, mutation: { string } }? },
     purchases: { [string]: number },                -- receipt id -> unix time (last 100)
     settings: { reduceShake: boolean, music: boolean, sfx: boolean },
+    flags: { tutorialDone: boolean },             -- added in Phase 2 (tutorial completion)
     lastOnline: number,
     _lock: { jobId: string, t: number }?,           -- session lock (§11.3)
 }
@@ -811,6 +812,8 @@ Workspace/World/
 | `Segment_Unlock` | C→S | `segmentId: string` | exactly the next segment, affordable | 1/s |
 | `Rebirth_Request` | C→S | — | cash ≥ cost | 1 / 2 s |
 | `Code_Redeem` | C→S | `code: string` | length 1..20, alnum, not redeemed, exists, not expired, failure lockout | 1 / 2 s, burst 3 |
+| `Settings_Set` | C→S | `key: string, value: boolean` | key in `settings`, boolean | 2/s |
+| `Tutorial_Done` | C→S | — | profile loaded | 1 / 5 s |
 | `Dev_Command` | C→S | `cmd: string, arg: number?` | **Created only if `RunService:IsStudio()`**; UserId must equal the dev id | 5/s |
 | `State_Snapshot` | S→C | public profile view | on load | — |
 | `State_Delta` | S→C | changed fields | batched ≤ 4 Hz | — |

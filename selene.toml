@@ -1,0 +1,10 @@
+std = "roblox"
+# Use the committed roblox.yml instead of downloading the Roblox API at lint time,
+# so lint also works offline and in Claude Code cloud sessions.
+# Regenerate it with: selene generate-roblox-std
+roblox-std-source = "pinned"
+
+[lints]
+global_usage = "deny"
+unused_variable = "warn"
+shadowing = "warn"

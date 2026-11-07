@@ -15,6 +15,9 @@
     "ServerStorage": {
       "Secrets": {
         "$path": "src/secrets"
+      },
+      "SFT_Tests": {
+        "$path": "tests/studio"
       }
     },
     "StarterPlayer": {
