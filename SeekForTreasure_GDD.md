@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | **Phase 2 in progress** (approved 2026-11-04). Steps 1–4 verified in Studio on 2026-11-07; see the README status table. |
+| Status | **Phase 2 in progress** (approved 2026-11-04). Steps 1–5 verified in Studio on 2026-11-07; see the README status table. |
 | Version | GDD v1.0, 2026-11-04 |
 | Genre | Idle RNG collection tycoon (auto-search → reveal → place → earn → upgrade → rebirth) |
 | Platform focus | Roblox, mobile first (landscape phone), desktop/tablet/console supported |
@@ -62,7 +62,7 @@
 | Server size 8 | Plots are 8 per server; `Players.MaxPlayers` is an Experience setting | Set server size to 8 in Game Settings when publishing |
 | ForgeGUI 3D generation | Locked on the current plan | Upgrade the plan, or choose an alternative for models |
 | Live like counter | Needs **Allow HTTP Requests** (an Experience setting) and a proxy, because `HttpService` can't call roblox.com directly | (a) public third-party proxy (RoProxy); (b) a small proxy you host (e.g., a Cloudflare Worker). Either needs your approval. |
-| `SEEKATREASURE` reward | Not specified | Default: 2 Luck Potions + 2 Cash Potions |
+| `SEEKATREASURE` reward | Not specified | Built with the default (2 Luck + 2 Cash Potions) in `src/secrets/Codes.luau`; change it there |
 | ForgeGUI → Roblox upload | Connection `@GavinForReal` is `needs_validation / asset_permission_missing` | Re-validate the API key with asset permissions in ForgeGUI |
 
 ---

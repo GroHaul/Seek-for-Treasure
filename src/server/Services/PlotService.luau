@@ -316,7 +316,11 @@ function PlotService.placeBest(player: Player, profile: Types.Profile)
 		if a.income ~= b.income then
 			return a.income > b.income
 		end
-		return a.t < b.t
+		if a.t ~= b.t then
+			return a.t < b.t
+		end
+		-- same second: lower uid number first, so the order is deterministic
+		return (tonumber(string.sub(a.uid, 2)) or 0) < (tonumber(string.sub(b.uid, 2)) or 0)
 	end)
 	table.clear(profile.plot.layout)
 	for slot = 1, math.min(profile.plot.slots, #ranked) do
@@ -331,6 +335,32 @@ function PlotService.trimLayout(player: Player, profile: Types.Profile)
 		local n = tonumber(key)
 		if n == nil or n > profile.plot.slots then
 			profile.plot.layout[key] = nil
+		end
+	end
+	layoutChanged(player, profile)
+end
+
+--- Put the best unplaced treasures into empty unlocked slots (after buying a slot).
+function PlotService.fillEmptySlots(player: Player, profile: Types.Profile)
+	local placed: { [string]: boolean } = {}
+	for _, uid in profile.plot.layout do
+		placed[uid] = true
+	end
+	local unplaced: { { uid: string, income: number } } = {}
+	for uid, entry in profile.inventory do
+		if not placed[uid] then
+			table.insert(unplaced, { uid = uid, income = EconomyMath.treasureIncome(entry) })
+		end
+	end
+	table.sort(unplaced, function(a, b)
+		return a.income > b.income
+	end)
+	local nextBest = 1
+	for slot = 1, profile.plot.slots do
+		local key = tostring(slot)
+		if profile.plot.layout[key] == nil and unplaced[nextBest] then
+			profile.plot.layout[key] = unplaced[nextBest].uid
+			nextBest += 1
 		end
 	end
 	layoutChanged(player, profile)

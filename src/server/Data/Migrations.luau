@@ -76,7 +76,7 @@ function Migrations.reconcile(profile: any): any
 	local template = ProfileTemplate.new() :: any
 	fill(profile, template)
 	for key in profile do
-		if template[key] == nil and not KEEP_UNKNOWN[key] and key ~= "stats" then
+		if template[key] == nil and not KEEP_UNKNOWN[key] then
 			profile._legacy = profile._legacy or {}
 			profile._legacy[key] = profile[key]
 			profile[key] = nil

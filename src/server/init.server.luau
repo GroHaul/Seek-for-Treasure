@@ -14,6 +14,11 @@ local ORDER = {
 	"SocialService",
 	"InventoryService",
 	"PlotService",
+	"ShopService",
+	"PotionService",
+	"RebirthService",
+	"CodeService",
+	"SettingsService",
 	"SearchService",
 	"DevService",
 }
