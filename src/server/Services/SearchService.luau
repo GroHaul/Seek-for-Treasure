@@ -21,6 +21,7 @@ local Types = require(Shared.Types)
 local Net = require(Shared.Net)
 local RollMath = require(Shared.RollMath)
 local SearchMath = require(Shared.SearchMath)
+local Catalog = require(Shared.Catalog)
 local Signal = require(Shared.Util.Signal)
 local Config = Shared.Config
 local Pity = require(Config.Pity) :: { Types.PityFloor }
@@ -101,12 +102,19 @@ function SearchService.nearestPity(profile: Types.Profile): { id: string, remain
 	return best
 end
 
+export type Force = { rarity: number, mutation: { string }? }
+
 --- One search for `player` in `segmentId`: roll, book-keeping, store, notify.
-function SearchService.doSearch(player: Player, profile: Types.Profile, segmentId: string): FindInfo
+--- `force` (Studio tests only; ignored live) fixes the rarity and mutations.
+function SearchService.doSearch(player: Player, profile: Types.Profile, segmentId: string, force: Force?): FindInfo
 	local now = os.time()
 	local luck = SearchService.luckFor(profile, segmentId, now)
 	local floor = SearchService.floorFor(profile)
 	local result = RollMath.roll(rand, segmentId, luck, floor, SearchMath.mutation(profile, segmentId, now), 1)
+	if force and RunService:IsStudio() then
+		local pool = Catalog.poolBySegmentRarity[segmentId][force.rarity]
+		result = { rarity = force.rarity, treasure = pool[1], mutation = force.mutation or {} }
+	end
 
 	for _, pity in Pity do
 		local pityTable = profile.pity :: any

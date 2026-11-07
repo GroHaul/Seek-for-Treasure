@@ -20,6 +20,9 @@ local ORDER = {
 	"CodeService",
 	"SettingsService",
 	"SearchService",
+	"IndexService",
+	"AnnounceService",
+	"TelemetryService",
 	"DevService",
 }
 

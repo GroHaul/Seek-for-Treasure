@@ -7,6 +7,7 @@
 ]]
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -59,6 +60,16 @@ end
 
 function SocialService.friendMult(player: Player): number
 	return EconomyMath.friendMult(SocialService.friendsInServer(player))
+end
+
+--- Studio test seam: pretend `player` has `friends` friends in the server
+--- (real friendships need two befriended accounts). No effect outside Studio.
+function SocialService.testSetFriends(player: Player, friends: number)
+	if not RunService:IsStudio() then
+		return
+	end
+	friendCount[player] = friends
+	SocialService.friendsChanged:Fire(player, friends)
 end
 
 function SocialService.init() end

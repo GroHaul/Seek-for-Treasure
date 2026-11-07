@@ -17,6 +17,9 @@ local ORDER = {
 	"RebirthController",
 	"CodesController",
 	"SettingsController",
+	"RevealController",
+	"BannerController",
+	"IndexController",
 	"PlotVisualsController",
 	"TutorialController",
 }

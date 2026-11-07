@@ -3,7 +3,7 @@
 	HudController: always-on HUD (GDD §13.2).
 	Top center: cash pill, income/sec, vault pill ("Collect!" pulse).
 	Top left: luck / search speed / mutation / friend chips, potion timers.
-	Left (thumb zone): Shop, Bag, Rebirth. Right: Codes, Settings.
+	Left (thumb zone): Shop, Bag, Rebirth. Right: Codes, Settings, Index.
 	All numbers come from State (server data) and shared math; nothing is computed
 	that the server doesn't also compute.
 ]]
@@ -142,15 +142,16 @@ local function buildMenu(canvas: Frame)
 		BackgroundTransparency = 1,
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.new(1, -10, 0, 8),
-		Size = UDim2.fromOffset(70, 236),
+		Size = UDim2.fromOffset(70, 222),
 		Parent = canvas,
-	}, { Kit.list(Enum.FillDirection.Vertical, 12) })
+	}, { Kit.list(Enum.FillDirection.Vertical, 8, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Top) })
 	local entries: { { icon: string, caption: string, parent: Frame } } = {
 		{ icon = "shop", caption = "Shop", parent = left },
 		{ icon = "inventory", caption = "Bag", parent = left },
 		{ icon = "rebirth", caption = "Rebirth", parent = left },
 		{ icon = "codes", caption = "Codes", parent = right },
 		{ icon = "settings", caption = "Settings", parent = right },
+		{ icon = "index", caption = "Index", parent = right },
 	}
 	for i, entry in entries do
 		local caption = entry.caption

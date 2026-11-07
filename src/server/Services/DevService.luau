@@ -21,6 +21,7 @@ local RemoteService = require(script.Parent.RemoteService)
 local StateService = require(script.Parent.StateService)
 local SearchService = require(script.Parent.SearchService)
 local PlotService = require(script.Parent.PlotService)
+local SocialService = require(script.Parent.SocialService)
 local Guard = require(script.Parent.Parent.Util.Guard)
 local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
 
@@ -126,6 +127,27 @@ local hookCommands: { [string]: (...any) -> any } = {
 			return "no player/profile/command"
 		end
 		return handler(player, profile, arg)
+	end,
+	find = function(userId: number, rarity: number, mutation: { string }?)
+		local player = Players:GetPlayerByUserId(userId)
+		local profile = if player then DataService.getProfile(player) else nil
+		if player == nil or profile == nil then
+			return "no player"
+		end
+		local info = SearchService.doSearch(player, profile, "pets", { rarity = rarity, mutation = mutation })
+		return info.treasure.name
+	end,
+	friends = function(userId: number, n: number)
+		local player = Players:GetPlayerByUserId(userId)
+		if player == nil then
+			return "no player"
+		end
+		SocialService.testSetFriends(player, n)
+		return SocialService.friendMult(player)
+	end,
+	telemetry = function()
+		local Telemetry = require(script.Parent.TelemetryService) :: any
+		return Telemetry.counts
 	end,
 	rejoin = function(userId: number, offlineSeconds: number)
 		local player = Players:GetPlayerByUserId(userId)

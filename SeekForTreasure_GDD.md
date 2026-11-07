@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | **Phase 2 in progress** (approved 2026-11-04). Steps 1–5 and the step 6 UI verified in Studio on 2026-11-07; see the README status table. |
+| Status | **Phase 2 in progress** (approved 2026-11-04). Steps 1–7 built and verified in Studio on 2026-11-07 (single client, mock DataStore); ForgeGUI art and sounds still blocked; see the README status table. |
 | Version | GDD v1.0, 2026-11-04 |
 | Genre | Idle RNG collection tycoon (auto-search → reveal → place → earn → upgrade → rebirth) |
 | Platform focus | Roblox, mobile first (landscape phone), desktop/tablet/console supported |
@@ -560,7 +560,7 @@ Built to be clipped. The core composition stays inside the **center 50% of the s
 | R7 | Cosmic | 6.0 s | Black-hole implosion → galaxy explosion | 12 px | deep bass drop | no |
 | R8 | Secret | 7.5 s | **Fake-out**: shows a Cosmic plate, it cracks, VHS glitch, a beat of silence, rainbow shatter | 14 px | unique stinger | no |
 
-Mutations add a second "+GOLDEN!" stamp beat (+0.5 s). "Reduce screen shake" setting (MVP\*). The server keeps searching during the cinematic. The client queues reveals and merges lower ones into a "+3 more finds" toast.
+Mutations add a second "+GOLDEN!" stamp beat (+0.5 s). The finder's own Mythic+ banner waits until their cinematic ends, so it never spoils the Secret fake-out. Sounds are pending ForgeGUI audio uploads. "Reduce screen shake" setting (MVP\*). The server keeps searching during the cinematic. The client queues reveals and merges lower ones into a "+3 more finds" toast.
 
 ### 9.2 Banners and beams
 

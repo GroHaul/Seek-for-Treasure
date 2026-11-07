@@ -3,7 +3,7 @@
 	SearchController: the search progress bar (bottom center), the pity meter
 	("Legendary+ in 312"), and a find toast for every reveal. The server decides
 	when a search completes; the bar only animates between Search_State and
-	Search_Reveal events. Step 7 adds the full reveal cinematic for Rare+.
+	Search_Reveal events. Finds go to RevealController (toast or cinematic).
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -22,7 +22,6 @@ local Theme = require(UI.Theme)
 local Root = require(UI.Root)
 local Remotes = require(script.Parent.Parent.Remotes)
 local State = require(script.Parent.StateController)
-local Toast = require(script.Parent.ToastController)
 
 local C = Theme.colors
 
@@ -143,9 +142,8 @@ function Search.start()
 			return
 		end
 		startedAt = workspace:GetServerTimeNow()
+		-- RevealController decides: toast for Common/Uncommon, cinematic for Rare+
 		Search.revealed:Fire(payload)
-		local text, color = Search.findText(payload)
-		Toast.show(text, color, if (tonumber(payload.rarity) or 1) >= 3 then 3.5 else 2)
 	end)
 	State.watch({ "pity" }, refreshPity)
 	RunService.RenderStepped:Connect(function()
