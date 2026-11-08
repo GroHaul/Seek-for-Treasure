@@ -12,7 +12,7 @@ local RANGE = 140
 
 local PlotVisuals = {}
 
-type Tracked = { part: BasePart, base: CFrame, phase: number, hue: number? }
+type Tracked = { part: BasePart, base: CFrame, phase: number, hue: number?, surface: SurfaceAppearance? }
 local tracked: { [BasePart]: Tracked } = {}
 
 local function track(part: Instance)
@@ -29,6 +29,8 @@ local function track(part: Instance)
 		base = part.CFrame,
 		phase = math.random() * math.pi * 2,
 		hue = if type(hue) == "number" then hue else nil,
+		-- textured ForgeGUI models show the hue through their SurfaceAppearance tint
+		surface = part:FindFirstChildOfClass("SurfaceAppearance"),
 	}
 	part.Destroying:Connect(function()
 		tracked[part] = nil
@@ -65,7 +67,12 @@ function PlotVisuals.start()
 			end
 			part.CFrame = info.base * CFrame.new(0, math.sin(t * 2 + info.phase) * 0.3, 0) * CFrame.Angles(0, (t * 0.8 + info.phase) % (math.pi * 2), 0)
 			if info.hue then
-				part.Color = Color3.fromHSV((t / info.hue + info.phase) % 1, 0.65, 1)
+				local color = Color3.fromHSV((t / info.hue + info.phase) % 1, 0.65, 1)
+				if info.surface then
+					info.surface.Color = color
+				else
+					part.Color = color
+				end
 			end
 		end
 	end)

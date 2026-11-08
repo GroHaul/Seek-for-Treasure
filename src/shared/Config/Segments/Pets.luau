@@ -35,6 +35,7 @@ local Pets: Types.Segment = {
 			weight = 1,
 			model = "DustBunny",
 			description = "Fluffy grey bunny shaped like a puff of dust, button nose, tiny stub feet",
+			modelAssetId = 91919214297204,
 		},
 		{
 			id = "pets_pebble_pup",
@@ -91,6 +92,7 @@ local Pets: Types.Segment = {
 			weight = 1,
 			model = "CrystalDragonling",
 			description = "Baby dragon with faceted gem spines and stubby translucent wings",
+			modelAssetId = 120675560718975,
 		},
 		{
 			id = "pets_halo_owl",
@@ -115,6 +117,7 @@ local Pets: Types.Segment = {
 			weight = 1,
 			model = "GalaxyAxolotl",
 			description = "Axolotl with swirling purple-pink galaxy skin and star-tipped gills",
+			modelAssetId = 70953326926481,
 		},
 		{
 			id = "pets_eclipse_griffin",
@@ -123,6 +126,7 @@ local Pets: Types.Segment = {
 			weight = 1,
 			model = "EclipseGriffin",
 			description = "Small griffin, half sun-gold and half night-violet feathers, an eclipse ring behind its head",
+			modelAssetId = 95057896845772,
 		},
 	},
 }

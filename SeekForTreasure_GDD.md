@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | **Phase 2 in progress** (approved 2026-11-04). Steps 1–7 built and verified in Studio on 2026-11-07; saving, a 2-player test and a 10-minute soak verified on the real DataStore in the published place on 2026-11-08; ForgeGUI art and sounds still blocked; see the README status table. |
+| Status | **Phase 2 in progress** (approved 2026-11-04). Steps 1–7 built and verified in Studio on 2026-11-07; saving, a 2-player test and a 10-minute soak verified on the real DataStore in the published place on 2026-11-08; 4 of 12 Pets treasure models in game (2026-11-08), other ForgeGUI art and sounds not made yet; see the README status table. |
 | Version | GDD v1.0, 2026-11-04 |
 | Genre | Idle RNG collection tycoon (auto-search → reveal → place → earn → upgrade → rebirth) |
 | Platform focus | Roblox, mobile first (landscape phone), desktop/tablet/console supported |
@@ -12,8 +12,8 @@
 
 > **Environment blockers for Phase 2 (found during setup).**
 > 1. ~~Roblox Studio MCP is not connected.~~ Resolved 2026-11-07: Phase 2 runs locally with the Studio MCP and Rojo live sync.
-> 2. **ForgeGUI → Roblox publishing connection `@GavinForReal` shows `needs_validation / asset_permission_missing`.** Models and images can be generated but not uploaded to Roblox until the API key gets asset permissions.
-> 3. **ForgeGUI 3D model generation is locked on the current plan** (`paid_generation_required`). GUI images work. Every treasure model, prop and pedestal needs a plan upgrade (https://forgegui.com/plans).
+> 2. ~~ForgeGUI → Roblox publishing connection `@GavinForReal` shows `needs_validation / asset_permission_missing`.~~ Resolved 2026-11-08: connection active with `asset:read` / `asset:write`.
+> 3. ~~ForgeGUI 3D model generation is locked on the current plan.~~ Resolved 2026-11-08 (Creator Plan). **Cost warning:** 12 model jobs + 1 remesh used about half of the monthly credits for 4 usable models (8 jobs failed on ForgeGUI's side). No further ForgeGUI generation without the owner's explicit go-ahead.
 
 **How to read this doc.** Each feature is tagged **MVP** (built in Phase 2) or **Backlog** (designed here, not built). The MVP scope is exactly the list in the brief. A few small sub-features it needs are tagged **MVP\*** and listed in §0; you approved them at Checkpoint 1.
 
@@ -60,10 +60,10 @@
 |---|---|---|
 | ~~Published test place + Studio API access~~ | Real DataStore persistence (acceptance: "persist across rejoin in the published test place") | **Resolved 2026-11-08:** place published, Studio API access on; persistence, shutdown save and session locking verified on the real DataStore (README step 2) |
 | Server size 8 | Plots are 8 per server; `Players.MaxPlayers` is an Experience setting | Set server size to 8 in Game Settings when publishing |
-| ForgeGUI 3D generation | Locked on the current plan | Upgrade the plan, or choose an alternative for models |
+| ~~ForgeGUI 3D generation~~ | Locked on the current plan | **Resolved 2026-11-08** (Creator Plan); see the cost warning above |
 | Live like counter | Needs **Allow HTTP Requests** (an Experience setting) and a proxy, because `HttpService` can't call roblox.com directly | (a) public third-party proxy (RoProxy); (b) a small proxy you host (e.g., a Cloudflare Worker). Either needs your approval. |
 | `SEEKATREASURE` reward | Not specified | Built with the default (2 Luck + 2 Cash Potions) in `src/secrets/Codes.luau`; change it there |
-| ForgeGUI → Roblox upload | Connection `@GavinForReal` is `needs_validation / asset_permission_missing` | Re-validate the API key with asset permissions in ForgeGUI |
+| ~~ForgeGUI → Roblox upload~~ | Connection `@GavinForReal` was `needs_validation / asset_permission_missing` | **Resolved 2026-11-08:** active; 4 treasure models uploaded (§13.3) |
 
 ---
 
@@ -870,6 +870,16 @@ The UI is built natively in Luau from these tokens (`src/client/UI/Theme.luau`, 
 | Divine / Celestial | ≤ 5,000 | — |
 | Cosmic / Secret | ≤ 6,000 | — |
 | **Worst case in view** | about 8 plots × 20 × 2,500 avg ≈ 400K tris server-wide; StreamingEnabled + `RenderFidelity.Automatic` keep about 2–3 plots on screen | Mutations are runtime material/color/particle overlays, so there are **no extra models per mutation** |
+
+**Actual (2026-11-08):** ForgeGUI standard-quality models come out at about 5,000 triangles regardless of prompt (Dust Bunny 5,251, Crystal Dragonling 4,948, Galaxy Axolotl 5,022, Eclipse Griffin 5,358), above the bands above. A remesh of the Dragonling to 3,000 (3,216 actual) smeared the wing texture onto its head, so the originals are kept and rely on `RenderFidelity.Automatic` distance LOD; 20 pedestals × 5,000 ≈ 100K triangles per full plot.
+
+| Treasure | Roblox asset | Status |
+|---|---|---|
+| Dust Bunny | 91919214297204 | ✅ in game |
+| Crystal Dragonling | 120675560718975 | ✅ in game |
+| Galaxy Axolotl | 70953326926481 | ✅ in game |
+| Eclipse Griffin | 95057896845772 | ✅ in game |
+| Pebble Pup, Sprout Kitten, Puddle Duckling, Toasty Corgi, Ember Fox, Storm Pony, Halo Owl, Starlight Stag | — | ⛔ ForgeGUI jobs failed; placeholder ball until the owner approves new generations |
 
 Count: 12 per segment, **12 in the MVP** and 36 in the Backlog. Pipeline: `generation_model_3d` (style-locked) → `asset_prepare` (measure tris, `bounds_bottom_center` pivot, scale to a 4-stud height) → human originality review → `artifact_publish` (needs a valid Roblox connection and **your go-ahead**).
 

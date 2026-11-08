@@ -34,6 +34,7 @@ local WorldService = require(script.Parent.WorldService)
 local ZoneService = require(script.Parent.ZoneService)
 local InventoryService = require(script.Parent.InventoryService)
 local SocialService = require(script.Parent.SocialService)
+local ModelService = require(script.Parent.ModelService)
 local Guard = require(script.Parent.Parent.Util.Guard)
 
 local PEDESTAL_COLORS = {
@@ -52,6 +53,13 @@ local PARTICLE_COLORS: { [string]: Color3 } = {
 	spark_blue = Color3.fromHex("#49B6FF"),
 	star_orbit = Color3.fromHex("#FFF3B0"),
 }
+-- ForgeGUI models: height in studs grows a little with rarity, and the footprint
+-- stays inside the 5 x 5 pedestal (flat models like the axolotl end up shorter)
+local MODEL_HEIGHT_BASE = 3.3
+local MODEL_HEIGHT_STEP = 0.1
+local MODEL_MAX_FOOTPRINT = 4.4
+-- the models face glTF +Z; turn them to face the plot's front row
+local MODEL_FACING = CFrame.Angles(0, math.pi, 0)
 
 local PlotService = {
 	collected = Signal.new() :: Signal.Signal<Player, number>,
@@ -114,17 +122,22 @@ local function makeLabel(parent: Instance, name: string, size: UDim2, offset: Ve
 end
 
 local function applyMutationVisuals(body: BasePart, mutation: { string })
+	-- textured models: the SurfaceAppearance hides Color and Material, so tint it instead
+	local surface = body:FindFirstChildOfClass("SurfaceAppearance")
 	for _, id in mutation do
 		local m = Catalog.mutationById[id]
 		if m == nil then
 			continue
 		end
 		local v = m.visual
-		if v.material then
+		if v.material and surface == nil then
 			body.Material = (Enum.Material :: any)[v.material]
 		end
 		if v.color then
 			body.Color = Color3.fromHex(v.color)
+			if surface then
+				surface.Color = body.Color
+			end
 		end
 		if v.reflectance then
 			body.Reflectance = v.reflectance
@@ -169,18 +182,33 @@ local function buildTreasure(entry: Types.InventoryEntry, top: CFrame, incomePer
 	local treasure = Catalog.treasureById[entry.id]
 	local model = Instance.new("Model")
 	model.Name = "Treasure"
-	local size = 2.2 + math.min(entry.rarity, 10) * 0.18
-	local body = Instance.new("Part")
-	body.Name = "Body"
-	body.Shape = Enum.PartType.Ball
-	body.Size = Vector3.one * size
-	body.Anchored = true
-	body.CanCollide = false
-	body.CanQuery = false
-	body.CanTouch = false
-	body.Material = Enum.Material.SmoothPlastic
-	body.Color = rarityColor(entry.rarity)
-	body.CFrame = top * CFrame.new(0, size / 2 + 0.2, 0)
+	local template = ModelService.template(entry.id)
+	local body: BasePart
+	local size: number -- height of the body in studs
+	if template then
+		local raw = template.Size
+		local targetHeight = MODEL_HEIGHT_BASE + math.min(entry.rarity, 10) * MODEL_HEIGHT_STEP
+		local scale = math.min(targetHeight / raw.Y, MODEL_MAX_FOOTPRINT / math.max(raw.X, raw.Z))
+		size = raw.Y * scale
+		local mesh = template:Clone()
+		mesh.Size = raw * scale
+		mesh.CFrame = top * CFrame.new(0, size / 2 + 0.05, 0) * MODEL_FACING
+		body = mesh
+	else
+		size = 2.2 + math.min(entry.rarity, 10) * 0.18
+		local ball = Instance.new("Part")
+		ball.Name = "Body"
+		ball.Shape = Enum.PartType.Ball
+		ball.Size = Vector3.one * size
+		ball.Anchored = true
+		ball.CanCollide = false
+		ball.CanQuery = false
+		ball.CanTouch = false
+		ball.Material = Enum.Material.SmoothPlastic
+		ball.Color = rarityColor(entry.rarity)
+		ball.CFrame = top * CFrame.new(0, size / 2 + 0.2, 0)
+		body = ball
+	end
 	applyMutationVisuals(body, entry.mutation)
 	body.Parent = model
 	local mut = mutationText(entry.mutation)
@@ -513,6 +541,12 @@ function PlotService.start()
 		local profile = DataService.getProfile(player)
 		if profile then
 			pushDerived(player, profile)
+		end
+	end)
+	-- a treasure model finished loading: swap the placeholder balls on every claimed plot
+	ModelService.ready:Connect(function()
+		for index in plotOwner do
+			refreshVisuals(index)
 		end
 	end)
 

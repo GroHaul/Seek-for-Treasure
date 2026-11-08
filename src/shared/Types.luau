@@ -92,6 +92,7 @@ export type Treasure = {
 	weight: number,
 	model: string, -- asset name under ReplicatedStorage.Assets.Treasures.<segment>
 	description: string, -- one-line ForgeGUI model description (GDD §4.2)
+	modelAssetId: number?, -- Roblox Model asset uploaded from ForgeGUI; nil = placeholder ball
 }
 
 export type ToolName = {
