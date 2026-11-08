@@ -165,7 +165,7 @@ function Shop.init()
 		local button = Kit.button(name, "neutral", function()
 			currentTab = name
 			render()
-		end, { Size = UDim2.fromOffset(140, 48), LayoutOrder = i })
+		end, { Size = UDim2.fromOffset(140, 48), LayoutOrder = i, Name = name })
 		button.instance.Parent = tabs
 		tabButtons[name] = button
 	end

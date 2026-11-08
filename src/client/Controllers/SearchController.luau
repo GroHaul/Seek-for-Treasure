@@ -145,7 +145,7 @@ function Search.start()
 		Search.active = payload.active == true
 		interval = tonumber(payload.interval) or interval
 		startedAt = tonumber(payload.startedAt) or workspace:GetServerTimeNow()
-		title.Text = if Search.active then "🎵 Searching..." else "Walk into Pawprint Meadow to search"
+		title.Text = if Search.active then "Searching..." else "Walk into Pawprint Meadow to search"
 		Search.stateChanged:Fire(Search.active)
 	end)
 	Remotes.on(Net.Search_Reveal, function(payload: any)

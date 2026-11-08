@@ -39,8 +39,8 @@ local chipFrames: { [string]: Frame } = {}
 local potionChips: { [string]: TextLabel } = {}
 local lastCash = 0
 
--- Stat chip: small glossy sky-blue pill with white outlined text.
-local function chip(parent: Instance, name: string, order: number): TextLabel
+-- Stat chip: small glossy sky-blue pill, icon on the left, white outlined value.
+local function chip(parent: Instance, name: string, order: number, iconName: string): TextLabel
 	local frame = Kit.panel({
 		Name = name,
 		LayoutOrder = order,
@@ -52,10 +52,14 @@ local function chip(parent: Instance, name: string, order: number): TextLabel
 		stroke.Thickness = 2.5
 	end
 	chipFrames[name] = frame
+	local icon = Kit.icon(iconName, 24)
+	icon.AnchorPoint = Vector2.new(0, 0.5)
+	icon.Position = UDim2.new(0, 4, 0.5, 0)
+	icon.Parent = frame
 	return Kit.label("", {
 		Name = "Text",
-		Size = UDim2.new(1, -12, 1, -6),
-		Position = UDim2.fromOffset(6, 3),
+		Size = UDim2.new(1, -36, 1, -6),
+		Position = UDim2.fromOffset(30, 3),
 		Parent = frame,
 	})
 end
@@ -100,7 +104,11 @@ local function buildTop(canvas: Frame)
 		Parent = canvas,
 	}, UDim.new(0.5, 0))
 	vaultScale = Kit.new("UIScale", { Parent = vaultPill })
-	vaultText = Kit.label("", { Size = UDim2.new(1, -16, 1, -6), Position = UDim2.fromOffset(8, 3), Parent = vaultPill })
+	local vaultIcon = Kit.icon("vault", 30)
+	vaultIcon.AnchorPoint = Vector2.new(0, 0.5)
+	vaultIcon.Position = UDim2.new(0, 8, 0.5, 0)
+	vaultIcon.Parent = vaultPill
+	vaultText = Kit.label("", { Size = UDim2.new(1, -52, 1, -6), Position = UDim2.fromOffset(42, 3), Parent = vaultPill })
 
 	-- one grid, 3 chips per row, wrapping downward: it stays left of the cash pill
 	-- even on an 800-wide phone canvas, and hidden chips take no space
@@ -118,13 +126,13 @@ local function buildTop(canvas: Frame)
 			FillDirection = Enum.FillDirection.Horizontal,
 		}),
 	})
-	chips.luck = chip(chipGrid, "Luck", 1)
-	chips.speed = chip(chipGrid, "Speed", 2)
-	chips.mutation = chip(chipGrid, "Mutation", 3)
-	chips.rebirths = chip(chipGrid, "Rebirths", 4)
-	chips.friends = chip(chipGrid, "Friends", 5)
+	chips.luck = chip(chipGrid, "Luck", 1, "luck")
+	chips.speed = chip(chipGrid, "Speed", 2, "speed")
+	chips.mutation = chip(chipGrid, "Mutation", 3, "mutation")
+	chips.rebirths = chip(chipGrid, "Rebirths", 4, "rebirth")
+	chips.friends = chip(chipGrid, "Friends", 5, "friends")
 	for i, potion in Catalog.potionById do
-		local label = chip(chipGrid, "Potion_" .. i, 10 + potion.durationSeconds)
+		local label = chip(chipGrid, "Potion_" .. i, 10 + potion.durationSeconds, "potion_" .. potion.id)
 		potionChips[potion.id] = label
 	end
 end
@@ -186,13 +194,13 @@ local function refreshIncome()
 	local income = tonumber(State.derived.income) or 0
 	incomeText.Text = "+" .. Format.cash(income) .. "/s"
 	local friends = tonumber(State.derived.friends) or 0
-	chips.friends.Text = string.format("👥 +%d%%", math.min(50, friends * 10))
+	chips.friends.Text = string.format("+%d%%", math.min(50, friends * 10))
 	chipFrames.Friends.Visible = friends > 0
 end
 
 local function refreshVault()
 	local vault = tonumber(State.profile.vault) or 0
-	vaultText.Text = "🏦 Vault " .. Format.cash(vault) .. (if vault >= 1 then " · Collect!" else "")
+	vaultText.Text = "Vault " .. Format.cash(vault) .. (if vault >= 1 then " · Collect!" else "")
 	vaultPill.Visible = vault >= 1
 end
 
@@ -202,11 +210,11 @@ local function refreshStats()
 		return
 	end
 	local now = os.time()
-	chips.luck.Text = string.format("🍀 x%.2f", SearchMath.luck(profile, SEGMENT, now))
-	chips.speed.Text = string.format("⏱️ %.2fs", SearchMath.interval(profile, SEGMENT, now))
-	chips.mutation.Text = string.format("✨ x%.2f", SearchMath.mutation(profile, SEGMENT, now))
+	chips.luck.Text = string.format("x%.2f", SearchMath.luck(profile, SEGMENT, now))
+	chips.speed.Text = string.format("%.2fs", SearchMath.interval(profile, SEGMENT, now))
+	chips.mutation.Text = string.format("x%.2f", SearchMath.mutation(profile, SEGMENT, now))
 	local rebirths = tonumber(profile.rebirths) or 0
-	chips.rebirths.Text = "🌟 " .. rebirths
+	chips.rebirths.Text = tostring(rebirths)
 	chipFrames.Rebirths.Visible = rebirths > 0
 	for id, label in potionChips do
 		local expiry = if profile.potions then tonumber(profile.potions[id]) or 0 else 0
@@ -214,8 +222,7 @@ local function refreshStats()
 		local frame = label.Parent :: Frame
 		frame.Visible = remaining > 0
 		if remaining > 0 then
-			local glyph = if id == "luck" then "🍀" elseif id == "speed" then "⚡" elseif id == "mutation" then "🧪" else "💰"
-			label.Text = glyph .. " " .. Format.duration(remaining)
+			label.Text = Format.duration(remaining)
 		end
 	end
 end
