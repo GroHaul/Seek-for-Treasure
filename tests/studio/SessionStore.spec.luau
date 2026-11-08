@@ -42,7 +42,7 @@ return function(): string
 	-- new profile + lock
 	local r1 = A:load(KEY)
 	check("new player -> status new", r1.status == "new")
-	check("new profile is schema 1 with 6 slots", r1.profile.schema == 1 and r1.profile.plot.slots == 6)
+	check("new profile is schema 2 with 6 slots", r1.profile.schema == 2 and r1.profile.plot.slots == 6)
 	check("lock stamped for job A", raw()._lock.jobId == "A" and raw()._lock.t == clock)
 
 	-- save keeps lock, persists data
@@ -140,6 +140,11 @@ return function(): string
 	local r9 = A:load("u_7")
 	local p = r9.profile
 	check("reconcile filled missing settings", p.settings ~= nil and p.settings.reduceShake == false)
+	check("schema 1 -> 2 migration", p.schema == 2)
+	check(
+		"schema 2 fields added (diamonds, upgrades, potion bag/stock, diamond potion)",
+		p.diamonds == 0 and next(p.upgrades) == nil and next(p.potionBag) == nil and p.potionStock.cycle == 0 and p.potions.diamond == 0
+	)
 	check("unknown key moved to _legacy", p.foo == nil and p._legacy and p._legacy.foo == "old field")
 	check("Config wins for rarity/segment", p.inventory.t1.rarity == 4 and p.inventory.t1.segment == "pets")
 	check("unknown treasure -> 60 s of income (Legendary 200/s = 12,000)", p.inventory.t2 == nil and p.cash == 10 + 12000)

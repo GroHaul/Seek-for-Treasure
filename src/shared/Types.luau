@@ -116,7 +116,7 @@ export type Segment = {
 }
 
 -- Config/Potions --------------------------------------------------------------
-export type PotionEffect = "luck" | "speed" | "mutation" | "cash"
+export type PotionEffect = "luck" | "speed" | "mutation" | "cash" | "diamond"
 
 export type Potion = {
 	id: PotionEffect,
@@ -125,11 +125,106 @@ export type Potion = {
 	durationSeconds: number,
 	priceSeconds: number, -- price = max(minPrice, priceSeconds * base plot income)
 	minPrice: number,
+	description: string,
+}
+
+-- One line of the Potions stall's stock table: each restock, the potion appears
+-- with probability `chance`, with a stock of min..max (inclusive).
+export type PotionStockEntry = {
+	id: PotionEffect,
+	chance: number,
+	min: number,
+	max: number,
 }
 
 export type PotionsConfig = {
 	maxRemainingSeconds: number,
+	bagMax: number, -- most potions of one kind a player can hold
+	restockSeconds: number,
 	list: { Potion },
+	stock: { PotionStockEntry },
+}
+
+-- Config/Diamonds -------------------------------------------------------------
+export type DiamondsConfig = {
+	baseChance: number, -- chance per find before boosts
+	chanceCap: number,
+	byRarity: { number }, -- diamonds dropped by rarity order 1..10
+}
+
+-- Config/UpgradeTree ----------------------------------------------------------
+export type UpgradeEffect =
+	"none"
+	| "luck"
+	| "interval"
+	| "cash"
+	| "diamondChance"
+	| "diamondAmount"
+	| "mutation"
+	| "walkSpeed"
+	| "offlineCap"
+	| "offlineRate"
+	| "slots"
+
+export type UpgradeNode = {
+	id: string,
+	name: string,
+	description: string, -- "{v}" is replaced by the per-level value
+	icon: string, -- UI/Assets key
+	q: number, -- axial hex coordinates; the root is (0, 0)
+	r: number,
+	effect: UpgradeEffect,
+	perLevel: number,
+	costs: { number }, -- diamond price of level 1..n; #costs is the max level
+	currency: "diamonds" | "cash" | "none",
+	requires: string?, -- node that needs level >= 1 before this one shows
+	comingSoon: boolean?,
+}
+
+export type UpgradeTreeConfig = {
+	nodes: { UpgradeNode },
+}
+
+-- Config/Monetization ---------------------------------------------------------
+export type PassInfo = {
+	key: string,
+	name: string,
+	description: string,
+	icon: string,
+	id: number, -- Roblox gamepass id; 0 = not created yet ("Coming soon")
+	price: number, -- Robux, shown until the live price loads
+	luck: boolean?, -- changes the odds of free rolls (paid-random policy gate)
+}
+
+export type ProductGrant = {
+	potions: { [string]: number }?, -- potion id -> count added to the bag
+	diamonds: number?,
+	cashSeconds: number?, -- seconds of the buyer's base plot income
+	serverLuckSeconds: number?,
+}
+
+export type ProductInfo = {
+	key: string,
+	name: string,
+	description: string,
+	icon: string,
+	id: number, -- Roblox developer product id; 0 = not created yet
+	price: number,
+	tab: "Potions" | "Diamonds" | "Boosts",
+	grant: ProductGrant,
+	luck: boolean?,
+	featured: boolean?,
+}
+
+export type MonetizationConfig = {
+	passes: { PassInfo },
+	products: { ProductInfo },
+	vip: { cashMult: number, offlineCapBonusSeconds: number, offlineRate: number },
+	cash2xMult: number,
+	luck2xMult: number,
+	fastSearchMult: number,
+	serverLuckMult: number,
+	purchaseHistory: number, -- receipt ids kept in the profile
 }
 
 -- Config/Upgrades -------------------------------------------------------------
@@ -236,7 +331,11 @@ export type Profile = {
 	plot: { slots: number, layout: { [string]: string } }, -- "1".."24" -> uid
 	tools: { [string]: { owned: number, equipped: number } },
 	segments: { [string]: boolean },
-	potions: { luck: number, speed: number, mutation: number, cash: number }, -- unix expiry, 0 = none
+	potions: { luck: number, speed: number, mutation: number, cash: number, diamond: number }, -- unix expiry, 0 = none
+	potionBag: { [string]: number }, -- potion id -> count held (drink from the hotbar)
+	potionStock: { cycle: number, bought: { [string]: number } }, -- this restock's purchases
+	diamonds: number,
+	upgrades: { [string]: number }, -- upgrade-tree node id -> level
 	pity: { epic: number, legendary: number, mythic: number },
 	index: { [string]: { n: number, m: number } }, -- treasureId -> count found, mutation bitmask
 	indexRewards: { [string]: number }, -- segment -> highest milestone claimed (0..3)
@@ -270,6 +369,7 @@ export type RevealPayload = {
 	mutation: { string },
 	soldFor: number?,
 	pity: { id: string, remaining: number }?, -- nearest pity floor after this find
+	diamonds: number?, -- diamonds this find dropped (nil = none)
 }
 
 return nil

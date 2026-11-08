@@ -12,6 +12,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Net = require(Shared:WaitForChild("Net"))
 local Format = require(Shared:WaitForChild("Format"))
 local Catalog = require(Shared:WaitForChild("Catalog"))
+local UpgradeMath = require(Shared:WaitForChild("UpgradeMath"))
 
 local UI = script.Parent.Parent.UI
 local Kit = require(UI.Kit)
@@ -97,6 +98,47 @@ local NOTIFY_TEXT: { [string]: (any) -> (string, Color3?) } = {
 	end,
 	code_limit = function()
 		return "Code limit reached", C.coral
+	end,
+	-- stalls, upgrades, Robux shop (GDD §15)
+	sold_out = function(p)
+		return potionName(p.potionId) .. " is sold out until the next restock", C.coral
+	end,
+	bag_full = function()
+		return "Your potion bag is full", C.coral
+	end,
+	bought_potion = function(p)
+		return potionName(p.potionId) .. " added to your bag!", C.grape
+	end,
+	potion_used = function(p)
+		return "🧪 " .. potionName(p.potionId) .. " active!", C.grape
+	end,
+	cant_afford_diamonds = function(p)
+		return "Not enough diamonds: need 💎 " .. Format.number(tonumber(p.price) or 0), C.coral
+	end,
+	upgrade_bought = function(p)
+		local node = if type(p.nodeId) == "string" then UpgradeMath.nodeById[p.nodeId] else nil
+		return string.format("⬆ %s level %d!", if node then node.name else "Upgrade", tonumber(p.level) or 1), C.cash
+	end,
+	not_configured = function()
+		return "Coming soon!", C.sun
+	end,
+	restricted = function()
+		return "This item isn't available for your account", C.coral
+	end,
+	pass_owned = function()
+		return "You already own this pass", C.sun
+	end,
+	pass_bought = function(p)
+		local pass = if type(p.key) == "string" then Catalog.passByKey[p.key] else nil
+		return "Thanks! " .. (if pass then pass.name else "Your pass") .. " is active", C.cash
+	end,
+	product_granted = function(p)
+		local product = if type(p.key) == "string" then Catalog.productByKey[p.key] else nil
+		return "Thanks! " .. (if product then product.name else "Your purchase") .. " delivered", C.cash
+	end,
+	server_luck = function(p)
+		local name = if type(p.name) == "string" then p.name else "Someone"
+		return string.format("🍀 %s boosted the server's luck! x2 for %s", name, Format.duration(tonumber(p.seconds) or 900)), C.leaf
 	end,
 }
 

@@ -1,20 +1,23 @@
 --!strict
 --[[
-	HudController: always-on HUD (GDD §13.2).
-	Top center: cash pill, income/sec, vault pill ("Collect!" pulse).
-	Top left: luck / search speed / mutation / friend chips, potion timers.
-	Left (thumb zone): Shop, Bag, Rebirth. Right: Codes, Settings, Index.
+	HudController: always-on HUD (GDD §13.2, §15).
+	Top center: SHOPS / PLOT / MEADOW teleport buttons, cash (+ income/sec) and
+	diamonds counters, vault pill ("Collect!" pulse).
+	Top left: luck / search speed / mutation / rebirth / friend / Server Luck chips
+	(at most two rows); potion timers are on the potion hotbar.
+	Left (thumb zone): Shop (Robux), Bag, Rebirth. Right: Codes, Settings, Index.
 	All numbers come from State (server data) and shared math; nothing is computed
 	that the server doesn't also compute.
 ]]
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Format = require(Shared:WaitForChild("Format"))
 local SearchMath = require(Shared:WaitForChild("SearchMath"))
-local Catalog = require(Shared:WaitForChild("Catalog"))
+local Boosts = require(Shared:WaitForChild("Boosts"))
 
 local UI = script.Parent.Parent.UI
 local Kit = require(UI.Kit)
@@ -31,12 +34,12 @@ local Hud = {
 
 local cashText: TextLabel
 local incomeText: TextLabel
+local diamondText: TextLabel
 local vaultPill: Frame
 local vaultText: TextLabel
 local vaultScale: UIScale
 local chips: { [string]: TextLabel } = {}
 local chipFrames: { [string]: Frame } = {}
-local potionChips: { [string]: TextLabel } = {}
 local lastCash = 0
 
 -- Stat chip: small glossy sky-blue pill, icon on the left, white outlined value.
@@ -64,41 +67,114 @@ local function chip(parent: Instance, name: string, order: number, iconName: str
 	})
 end
 
+--- Teleport the character to a CFrame the server published on workspace.World
+--- (attributes replicate even when the target area is streamed out).
+local function teleportTo(attribute: string)
+	local world = workspace:FindFirstChild("World")
+	local target = if world then world:GetAttribute(attribute) else nil
+	local player = Players.LocalPlayer :: Player
+	local character = player.Character
+	if typeof(target) ~= "CFrame" or character == nil or character:FindFirstChild("HumanoidRootPart") == nil then
+		return
+	end
+	Root.close()
+	task.spawn(function()
+		pcall(function()
+			player:RequestStreamAroundAsync(target.Position, 2)
+		end)
+		if character.Parent then
+			character:PivotTo(target + Vector3.new(0, 3, 0))
+		end
+	end)
+end
+
+local TELEPORTS: { { name: string, color: Color3, target: () -> string } } = {
+	{
+		name = "SHOPS",
+		color = C.leaf,
+		target = function()
+			return "MarketSpawn"
+		end,
+	},
+	{
+		name = "PLOT",
+		color = C.sky,
+		target = function()
+			return string.format("PlotSpawn_%02d", tonumber(State.derived.plotIndex) or 0)
+		end,
+	},
+	{
+		name = "MEADOW",
+		color = C.sun,
+		target = function()
+			return "MeadowSpawn"
+		end,
+	},
+}
+
 local function buildTop(canvas: Frame)
-	-- floating cash counter: big icon + big green outlined number, no backing,
-	-- like the counters in simulator games (readable on any background)
-	local cashPill = Kit.new("Frame", {
-		Name = "CashPill",
+	-- teleport buttons: the market, your plot, the search meadow
+	local teleports = Kit.new("Frame", {
+		Name = "Teleports",
 		BackgroundTransparency = 1,
 		AnchorPoint = Vector2.new(0.5, 0),
 		Position = UDim2.new(0.5, 0, 0, 4),
-		Size = UDim2.fromOffset(250, 50),
+		Size = UDim2.fromOffset(284, 48),
+		Parent = canvas,
+	}, { Kit.list(Enum.FillDirection.Horizontal, 4) })
+	for i, entry in TELEPORTS do
+		local button = Kit.button(entry.name, "secondary", function()
+			teleportTo(entry.target())
+		end, { Name = entry.name, Size = UDim2.fromOffset(92, 48), LayoutOrder = i })
+		button.setColor(entry.color)
+		button.instance.Parent = teleports
+		Hud.menu[entry.name] = button.instance
+	end
+
+	-- floating counters: cash (+ income) and diamonds, big outlined numbers with
+	-- no backing, readable on any background
+	local currencies = Kit.new("Frame", {
+		Name = "Currencies",
+		BackgroundTransparency = 1,
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, 56),
+		Size = UDim2.fromOffset(292, 42),
 		Parent = canvas,
 	})
-	local icon = Kit.icon("cash", 42)
-	icon.AnchorPoint = Vector2.new(0, 0.5)
-	icon.Position = UDim2.new(0, 4, 0.5, 0)
-	icon.Parent = cashPill
+	local icon = Kit.icon("cash", 36)
+	icon.Position = UDim2.fromOffset(0, 2)
+	icon.Parent = currencies
 	cashText = Kit.label("$0", {
 		Name = "Cash",
-		Size = UDim2.new(1, -56, 1, 0),
-		Position = UDim2.fromOffset(52, 0),
+		Size = UDim2.fromOffset(150, 27),
+		Position = UDim2.fromOffset(40, 0),
 		TextXAlignment = Enum.TextXAlignment.Left,
-		Parent = cashPill,
+		Parent = currencies,
 	}, 3)
 	Kit.gradient(C.cashLight, C.cashDeep).Parent = cashText
 	incomeText = Kit.label("+$0/s", {
 		Name = "Income",
-		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 54),
-		Size = UDim2.fromOffset(220, 22),
+		Size = UDim2.fromOffset(150, 15),
+		Position = UDim2.fromOffset(40, 27),
+		TextXAlignment = Enum.TextXAlignment.Left,
 		TextColor3 = C.cashLight,
-		Parent = canvas,
-	})
+		Parent = currencies,
+	}, 1.5)
+	local gem = Kit.icon("diamond", 34)
+	gem.Position = UDim2.fromOffset(194, 3)
+	gem.Parent = currencies
+	diamondText = Kit.label("0", {
+		Name = "Diamonds",
+		Size = UDim2.fromOffset(62, 30),
+		Position = UDim2.fromOffset(230, 5),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Parent = currencies,
+	}, 3)
+	Kit.gradient(C.white, C.sky).Parent = diamondText
 	vaultPill = Kit.panel({
 		Name = "VaultPill",
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 82),
+		Position = UDim2.new(0.5, 0, 0, 102),
 		Size = UDim2.fromOffset(250, 34),
 		BackgroundColor3 = C.cash,
 		Parent = canvas,
@@ -131,10 +207,8 @@ local function buildTop(canvas: Frame)
 	chips.mutation = chip(chipGrid, "Mutation", 3, "mutation")
 	chips.rebirths = chip(chipGrid, "Rebirths", 4, "rebirth")
 	chips.friends = chip(chipGrid, "Friends", 5, "friends")
-	for i, potion in Catalog.potionById do
-		local label = chip(chipGrid, "Potion_" .. i, 10 + potion.durationSeconds, "potion_" .. potion.id)
-		potionChips[potion.id] = label
-	end
+	chips.serverLuck = chip(chipGrid, "ServerLuck", 6, "serverLuck")
+	-- active potion timers live on the potion hotbar (PotionBarController)
 end
 
 local function buildMenu(canvas: Frame)
@@ -190,6 +264,10 @@ local function refreshCash()
 	lastCash = cash
 end
 
+local function refreshDiamonds()
+	diamondText.Text = Format.number(tonumber(State.profile.diamonds) or 0)
+end
+
 local function refreshIncome()
 	local income = tonumber(State.derived.income) or 0
 	incomeText.Text = "+" .. Format.cash(income) .. "/s"
@@ -210,31 +288,29 @@ local function refreshStats()
 		return
 	end
 	local now = os.time()
-	chips.luck.Text = string.format("x%.2f", SearchMath.luck(profile, SEGMENT, now))
-	chips.speed.Text = string.format("%.2fs", SearchMath.interval(profile, SEGMENT, now))
+	local me = Players.LocalPlayer
+	chips.luck.Text = string.format("x%.2f", SearchMath.luck(profile, SEGMENT, now, me))
+	chips.speed.Text = string.format("%.2fs", SearchMath.interval(profile, SEGMENT, now, me))
 	chips.mutation.Text = string.format("x%.2f", SearchMath.mutation(profile, SEGMENT, now))
 	local rebirths = tonumber(profile.rebirths) or 0
 	chips.rebirths.Text = tostring(rebirths)
 	chipFrames.Rebirths.Visible = rebirths > 0
-	for id, label in potionChips do
-		local expiry = if profile.potions then tonumber(profile.potions[id]) or 0 else 0
-		local remaining = expiry - now
-		local frame = label.Parent :: Frame
-		frame.Visible = remaining > 0
-		if remaining > 0 then
-			label.Text = Format.duration(remaining)
-		end
+	local serverLuck = Boosts.serverLuckRemaining(now)
+	chipFrames.ServerLuck.Visible = serverLuck > 0
+	if serverLuck > 0 then
+		chips.serverLuck.Text = Format.duration(serverLuck)
 	end
 end
 
--- The cash / income / vault group is centered, but never further left than
--- the right edge of the chip grid (8 + 264) plus half its width, so the two
--- never overlap on narrow phones.
+-- The teleport / currency / vault group is centered, but never further left
+-- than the right edge of the chip grid (8 + 264) plus half its width, so the
+-- two never overlap on narrow phones.
 local CHIPS_RIGHT = 8 + 264 + 8
+local GROUP_HALF_WIDTH = 146
 local function placeCenterGroup(canvas: Frame)
 	local width = canvas.Size.X.Offset
-	local centerX = math.max(width / 2, CHIPS_RIGHT + 125)
-	for _, name in { "CashPill", "Income", "VaultPill" } do
+	local centerX = math.max(width / 2, CHIPS_RIGHT + GROUP_HALF_WIDTH)
+	for _, name in { "Teleports", "Currencies", "VaultPill" } do
 		local item = canvas:FindFirstChild(name)
 		if item and item:IsA("GuiObject") then
 			item.Position = UDim2.fromOffset(centerX, item.Position.Y.Offset)
@@ -254,6 +330,7 @@ end
 
 function Hud.start()
 	State.watch({ "cash" }, refreshCash)
+	State.watch({ "diamonds" }, refreshDiamonds)
 	State.watch({ "derived" }, refreshIncome)
 	State.watch({ "vault" }, refreshVault)
 	State.watch({ "tools", "potions", "rebirths", "indexRewards" }, refreshStats)

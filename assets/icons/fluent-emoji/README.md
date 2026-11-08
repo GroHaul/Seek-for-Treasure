@@ -25,5 +25,20 @@ Downloaded and uploaded to Roblox (through Studio, owner account) on 2026-11-08.
 | `tool.png` | Musical note | Whistle tools (Shop) | 95145629235572 |
 | `slot.png` | Brick | Plot-slot upgrade (Shop) | 121177499435167 |
 | `lock.png` | Locked | Lock icon | 95315631693920 |
+| `diamond.png` | Gem stone | Diamonds counter, Gem Hoard, diamond packs | 120139401336850 |
+| `potion_diamond.png` | Crystal ball | Diamond Potion | 117482636144256 |
+| `diamondChance.png` | Diamond with a dot | Diamond Nose upgrade | 84611341527824 |
+| `walk.png` | Running shoe | Swift Feet upgrade | 123515951116594 |
+| `offlineCap.png` | Crescent moon | Night Shift upgrade | 77986424458165 |
+| `offlineRate.png` | Hourglass done | Overtime upgrade | 108184866399308 |
+| `root.png` | Magnifying glass tilted left | Upgrade tree root | 104021498820054 |
+| `vip.png` | Crown | VIP pass | 73783507557871 |
+| `fastSearch.png` | Rocket | Fast Search pass | 111889349961039 |
+| `autoCollect.png` | Robot | Auto-Collect pass | 93633139377617 |
+| `serverLuck.png` | Megaphone | Server Luck Boost | 105437595512582 |
+| `cashChest.png` | Package | Cash Chest | 107943854205132 |
+| `market.png` | Shopping bags | SHOPS teleport button | 124328058717060 |
+
+The hexagon tiles of the upgrade tree (`assets/ui/hex_fill.png` 112613028304057, `assets/ui/hex_outline.png` 74056572729680) are drawn by us, not part of Fluent Emoji.
 
 To re-upload: serve this folder on localhost (Studio's uploader only accepts local or trusted hosts) and use Studio's image upload, then update `Assets.luau`.

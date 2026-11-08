@@ -5,7 +5,10 @@
 
 	Layout (studs): Pawprint Meadow search field is a 60 x 60 square at the
 	origin. Four plots face it from the north and four from the south; each
-	plot's front edge is 30 studs from the meadow edge (GDD §1.2).
+	plot's front edge is 30 studs from the meadow edge (GDD §1.2). The market
+	plaza (GDD §15.2) is west of the meadow: a round plaza with the Tools,
+	Potions and Upgrades stalls facing its center, each with a ProximityPrompt
+	(attribute StallKind) that opens that stall's panel on the client.
 
 	If a hand-made Workspace.World already exists (no SFT_Managed attribute),
 	it is used as-is and nothing is built.
@@ -52,9 +55,31 @@ export type PlotInfo = {
 	padVisual: BasePart,
 }
 
+export type MarketInfo = {
+	center: Vector3,
+	radius: number,
+	spawn: BasePart,
+	stalls: { [string]: Model }, -- "Tools" | "Potions" | "Upgrades"
+}
+
+local MARKET_CENTER = Vector3.new(-88, 0, 0)
+local MARKET_RADIUS = 24
+local STALL_DISTANCE = 18
+local WOOD = Color3.fromHex("#A8713F")
+local WOOD_DARK = Color3.fromHex("#7A4E2B")
+
+local STALLS = {
+	{ kind = "Tools", title = "TOOLS", color = Color3.fromHex("#49B6FF"), angle = 120, goods = "tools" },
+	{ kind = "Potions", title = "POTIONS", color = Color3.fromHex("#8E5CFF"), angle = 180, goods = "potions" },
+	{ kind = "Upgrades", title = "UPGRADES", color = Color3.fromHex("#3DDC84"), angle = 240, goods = "gems" },
+}
+
 local WorldService = {
 	plots = {} :: { PlotInfo },
+	market = nil :: MarketInfo?,
 	PALETTE = PALETTE,
+	MARKET_CENTER = MARKET_CENTER,
+	MARKET_RADIUS = MARKET_RADIUS,
 }
 
 local function part(props: { [string]: any }): Part
@@ -220,6 +245,203 @@ local function buildCodeBoard(world: Folder)
 	gui.Parent = board
 end
 
+-- Market (GDD §15.2) ---------------------------------------------------------
+
+-- A few simple goods on the shelf and counter, in the stall's colors.
+local function stallGoods(kind: string, cf: CFrame, color: Color3, parent: Instance)
+	for i = -2, 2 do
+		local x = i * 2.1
+		if kind == "potions" then
+			local bottle = part({
+				Name = "Bottle",
+				Shape = Enum.PartType.Cylinder,
+				Size = Vector3.new(1.4, 0.9, 0.9),
+				CFrame = cf * CFrame.new(x, 6.5, 3.4) * CFrame.Angles(0, 0, math.rad(90)),
+				Color = if i % 2 == 0 then color else PALETTE.sky,
+				Material = Enum.Material.Glass,
+				Transparency = 0.15,
+				CanCollide = false,
+				Parent = parent,
+			})
+			bottle.Reflectance = 0.2
+		elseif kind == "gems" then
+			part({
+				Name = "Gem",
+				Size = Vector3.new(0.9, 0.9, 0.9),
+				CFrame = cf * CFrame.new(x, 6.4, 3.4) * CFrame.Angles(math.rad(45), math.rad(45), 0),
+				Color = if i % 2 == 0 then PALETTE.sky else color,
+				Material = Enum.Material.Neon,
+				CanCollide = false,
+				Parent = parent,
+			})
+		else
+			part({
+				Name = "Whistle",
+				Size = Vector3.new(1.4, 0.5, 0.5),
+				CFrame = cf * CFrame.new(x, 6.1, 3.4) * CFrame.Angles(0, math.rad(20 * i), 0),
+				Color = if i % 2 == 0 then PALETTE.sun else color,
+				Material = Enum.Material.Metal,
+				CanCollide = false,
+				Parent = parent,
+			})
+		end
+	end
+end
+
+local function buildStall(def: { kind: string, title: string, color: Color3, angle: number, goods: string }, parent: Instance): Model
+	local angle = math.rad(def.angle)
+	local position = MARKET_CENTER + Vector3.new(math.cos(angle), 0, math.sin(angle)) * STALL_DISTANCE
+	-- local -Z (the counter side) faces the plaza center
+	local cf = CFrame.lookAt(position, Vector3.new(MARKET_CENTER.X, 0, MARKET_CENTER.Z))
+	local model = Instance.new("Model")
+	model.Name = def.kind .. "Stall"
+	model:SetAttribute("StallKind", def.kind)
+
+	part({
+		Name = "Floor",
+		Size = Vector3.new(15, 0.6, 11),
+		CFrame = cf * CFrame.new(0, 1.1, 0.5),
+		Color = WOOD_DARK,
+		Material = Enum.Material.WoodPlanks,
+		Parent = model,
+	})
+	local counter = part({
+		Name = "Counter",
+		Size = Vector3.new(12.5, 3.4, 2),
+		CFrame = cf * CFrame.new(0, 3.1, -3.6),
+		Color = WOOD,
+		Material = Enum.Material.WoodPlanks,
+		Parent = model,
+	})
+	part({ Name = "CounterTop", Size = Vector3.new(13.2, 0.5, 2.8), CFrame = cf * CFrame.new(0, 5.05, -3.6), Color = PALETTE.cream, Parent = model })
+	part({
+		Name = "BackWall",
+		Size = Vector3.new(13.5, 8, 0.8),
+		CFrame = cf * CFrame.new(0, 5.4, 4.6),
+		Color = WOOD,
+		Material = Enum.Material.WoodPlanks,
+		Parent = model,
+	})
+	part({ Name = "Shelf", Size = Vector3.new(11.5, 0.4, 1.6), CFrame = cf * CFrame.new(0, 5.8, 3.6), Color = PALETTE.cream, Parent = model })
+	for _, x in { -6.6, 6.6 } do
+		for _, z in { -4.6, 4.6 } do
+			part({ Name = "Post", Size = Vector3.new(0.9, 10.5, 0.9), CFrame = cf * CFrame.new(x, 6.5, z), Color = WOOD_DARK, Parent = model })
+		end
+	end
+	-- striped awning, tilted down toward the customer, with a valance at the front
+	local awning = cf * CFrame.new(0, 12, -0.3) * CFrame.Angles(math.rad(-14), 0, 0)
+	for i = 0, 6 do
+		local stripe = if i % 2 == 0 then def.color else PALETTE.cream
+		local x = -6.9 + i * 2.3
+		part({ Name = "Awning", Size = Vector3.new(2.3, 0.5, 11.5), CFrame = awning * CFrame.new(x, 0, 0), Color = stripe, Parent = model })
+		part({ Name = "Valance", Size = Vector3.new(2.3, 1.3, 0.4), CFrame = awning * CFrame.new(x, -0.8, -5.6), Color = stripe, Parent = model })
+	end
+	stallGoods(def.goods, cf, def.color, model)
+
+	-- big floating title, readable from across the plaza
+	local signAnchor = part({
+		Name = "Sign",
+		Size = Vector3.new(1, 1, 1),
+		CFrame = cf * CFrame.new(0, 16.5, 0),
+		Transparency = 1,
+		CanCollide = false,
+		CanQuery = false,
+		CanTouch = false,
+		Parent = model,
+	})
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "Title"
+	gui.Size = UDim2.fromScale(14, 4)
+	gui.MaxDistance = 300
+	gui.LightInfluence = 0
+	local title = Instance.new("TextLabel")
+	title.BackgroundTransparency = 1
+	title.Size = UDim2.fromScale(1, 1)
+	title.Font = Enum.Font.FredokaOne
+	title.TextScaled = true
+	title.Text = def.title
+	title.TextColor3 = Color3.new(1, 1, 1)
+	local gradient = Instance.new("UIGradient")
+	gradient.Color = ColorSequence.new(Color3.new(1, 1, 1), def.color)
+	gradient.Rotation = 90
+	gradient.Parent = title
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = PALETTE.ink
+	stroke.Thickness = 3
+	stroke.Parent = title
+	title.Parent = gui
+	gui.Parent = signAnchor
+
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.Name = "Open"
+	prompt.ActionText = "Open"
+	prompt.ObjectText = def.kind .. " Stall"
+	prompt.HoldDuration = 0
+	prompt.MaxActivationDistance = 12
+	prompt.RequiresLineOfSight = false
+	prompt.KeyboardKeyCode = Enum.KeyCode.E
+	prompt:SetAttribute("StallKind", def.kind)
+	prompt.Parent = counter
+
+	model.Parent = parent
+	return model
+end
+
+local function buildMarket(world: Folder)
+	local market = Instance.new("Model")
+	market.Name = "Market"
+	local flat = CFrame.new(MARKET_CENTER.X, 0, MARKET_CENTER.Z) * CFrame.Angles(0, 0, math.rad(90))
+	part({
+		Name = "Plaza",
+		Shape = Enum.PartType.Cylinder,
+		Size = Vector3.new(0.8, MARKET_RADIUS * 2, MARKET_RADIUS * 2),
+		CFrame = flat * CFrame.new(0.4, 0, 0),
+		Color = PALETTE.cream,
+		Parent = market,
+	})
+	part({
+		Name = "PlazaRing",
+		Shape = Enum.PartType.Cylinder,
+		Size = Vector3.new(0.84, 20, 20),
+		CFrame = flat * CFrame.new(0.42, 0, 0),
+		Color = PALETTE.coral,
+		Parent = market,
+	})
+	part({
+		Name = "PlazaCenter",
+		Shape = Enum.PartType.Cylinder,
+		Size = Vector3.new(0.88, 13, 13),
+		CFrame = flat * CFrame.new(0.44, 0, 0),
+		Color = PALETTE.sun,
+		Parent = market,
+	})
+	-- coral rays from the center to the edge, between the stalls
+	for i = 0, 3 do
+		local a = math.rad(45 + i * 90)
+		part({
+			Name = "Ray",
+			Size = Vector3.new(MARKET_RADIUS * 2 - 2, 0.84, 2.4),
+			CFrame = CFrame.new(MARKET_CENTER.X, 0.42, MARKET_CENTER.Z) * CFrame.Angles(0, a, 0),
+			Color = PALETTE.coral,
+			Parent = market,
+		})
+	end
+	-- where the SHOPS teleport drops you: the plaza's east side, facing the stalls
+	local spawnAt = MARKET_CENTER + Vector3.new(10, 3.5, 0)
+	local spawnPart: BasePart = zonePart("Spawn", CFrame.lookAt(spawnAt, spawnAt - Vector3.xAxis), Vector3.new(4, 1, 4), market)
+
+	local stalls: { [string]: Model } = {}
+	for _, def in STALLS do
+		stalls[def.kind] = buildStall(def, market)
+	end
+	market.Parent = world
+	WorldService.market = { center = MARKET_CENTER, radius = MARKET_RADIUS, spawn = spawnPart, stalls = stalls }
+	-- teleport targets as attributes: they replicate even when the parts are streamed out
+	world:SetAttribute("MarketSpawn", spawnPart.CFrame)
+	local toolsCounter = stalls.Tools:FindFirstChild("Counter") :: BasePart
+	world:SetAttribute("ToolsStall", toolsCounter.Position)
+end
+
 local function plotCFrame(index: number): CFrame
 	local perSide = PlotConfig.plotsPerServer / 2
 	local north = index <= perSide
@@ -370,13 +592,18 @@ function WorldService.init()
 	world:SetAttribute("SFT_Managed", true)
 	buildMeadow(world)
 	buildCodeBoard(world)
+	buildMarket(world)
 
 	local plotsFolder = Instance.new("Folder")
 	plotsFolder.Name = "Plots"
 	for index = 1, PlotConfig.plotsPerServer do
-		WorldService.plots[index] = buildPlot(index, plotsFolder)
+		local plot = buildPlot(index, plotsFolder)
+		WorldService.plots[index] = plot
+		world:SetAttribute(string.format("PlotSpawn_%02d", index), plot.spawn.CFrame)
 	end
 	plotsFolder.Parent = world
+	local meadowSpawn = Vector3.new(0, 4, 20)
+	world:SetAttribute("MeadowSpawn", CFrame.lookAt(meadowSpawn, Vector3.new(0, 4, 0)))
 	world.Parent = workspace
 end
 

@@ -5,7 +5,8 @@
 
 	Shop_BuyTool(toolId)     exactly the next tier of an unlocked segment's line
 	Shop_EquipTool(toolId)   any owned tier (cosmetic; stats use the highest owned)
-	Shop_BuySlot()           next slot, 6 -> 20, price 1,000 x 2.25^n
+	Shop_BuySlot()           next slot, 6 -> 20 (24 with the +4 Plot Slots pass), price 1,000 x 2.25^n
+	These are sold at the Tools and Upgrades stalls; the Shop menu is Robux-only.
 	Segment_Unlock(segId)    exactly the next locked segment in order
 ]]
 
@@ -16,6 +17,7 @@ local Types = require(Shared.Types)
 local Net = require(Shared.Net)
 local Catalog = require(Shared.Catalog)
 local EconomyMath = require(Shared.EconomyMath)
+local Boosts = require(Shared.Boosts)
 local Signal = require(Shared.Util.Signal)
 local Upgrades = require(Shared.Config.Upgrades) :: Types.UpgradesConfig
 
@@ -78,9 +80,14 @@ function ShopService.equipTool(player: Player, profile: Types.Profile, toolId: s
 	return true
 end
 
+--- Most slots this player can unlock: 20, or 24 with the +4 Plot Slots pass.
+function ShopService.maxSlots(player: Player): number
+	return Upgrades.slots.max + (if Boosts.hasPass(player, "plotSlots") then Upgrades.slots.passExtra else 0)
+end
+
 function ShopService.buySlot(player: Player, profile: Types.Profile): boolean
 	local slots = profile.plot.slots
-	if slots >= Upgrades.slots.max then
+	if slots >= ShopService.maxSlots(player) then
 		return false
 	end
 	local price = EconomyMath.slotPrice(slots)

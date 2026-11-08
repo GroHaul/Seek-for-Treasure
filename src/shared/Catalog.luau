@@ -14,6 +14,7 @@ local Mutations = require(Config.Mutations) :: Types.MutationsConfig
 local Segments = require(Config.Segments) :: { Types.Segment }
 local Potions = require(Config.Potions) :: Types.PotionsConfig
 local Tools = require(Config.Tools) :: Types.ToolsConfig
+local Monetization = require(Config.Monetization) :: Types.MonetizationConfig
 
 export type ToolInfo = {
 	id: string,
@@ -71,6 +72,25 @@ for _, potion in Potions.list do
 	potionById[potion.id] = potion
 end
 
+-- Robux shop: by key (what clients ask for) and by Roblox id (receipts).
+-- Items with id 0 aren't created in Creator Hub yet, so they have no Roblox id entry.
+local passByKey: { [string]: Types.PassInfo } = {}
+local passByRobloxId: { [number]: Types.PassInfo } = {}
+local productByKey: { [string]: Types.ProductInfo } = {}
+local productByRobloxId: { [number]: Types.ProductInfo } = {}
+for _, pass in Monetization.passes do
+	passByKey[pass.key] = pass
+	if pass.id ~= 0 then
+		passByRobloxId[pass.id] = pass
+	end
+end
+for _, product in Monetization.products do
+	productByKey[product.key] = product
+	if product.id ~= 0 then
+		productByRobloxId[product.id] = product
+	end
+end
+
 local Catalog = {
 	rarities = Rarities,
 	segments = Segments,
@@ -81,6 +101,10 @@ local Catalog = {
 	toolById = toolById,
 	mutationById = mutationById,
 	potionById = potionById,
+	passByKey = passByKey,
+	passByRobloxId = passByRobloxId,
+	productByKey = productByKey,
+	productByRobloxId = productByRobloxId,
 }
 
 --- The tool id for a segment's tier ("pets", 3 -> "pets_t3").

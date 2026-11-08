@@ -37,6 +37,9 @@ return function(): string
 		"Onboarding",
 		"Reveal",
 		"Social",
+		"Diamonds",
+		"UpgradeTree",
+		"Monetization",
 	}
 	local loaded: { [string]: any } = {}
 	for _, name in modules do
@@ -93,7 +96,45 @@ return function(): string
 	check("8 tool tiers", #loaded.Tools.tiers == 8)
 	check("T2 price 1000", loaded.Tools.tiers[2].basePrice == 1000)
 	check("T8 interval 1.0", loaded.Tools.tiers[8].interval == 1)
-	check("4 potions", #loaded.Potions.list == 4)
+	check("5 potions (incl. Diamond)", #loaded.Potions.list == 5)
+	check("potion restock 5 min", loaded.Potions.restockSeconds == 300)
+
+	-- diamonds (GDD §15.1)
+	check("diamonds: 8% base, 10 rarities", loaded.Diamonds.baseChance == 0.08 and #loaded.Diamonds.byRarity == 10)
+	local rising = true
+	for i = 2, 10 do
+		rising = rising and loaded.Diamonds.byRarity[i] > loaded.Diamonds.byRarity[i - 1]
+	end
+	check("diamonds rise with rarity", rising)
+
+	-- upgrade tree (GDD §15.4): unique ids and hex cells, prerequisites exist, rising costs
+	local ids: { [string]: boolean } = {}
+	local cells: { [string]: boolean } = {}
+	for _, node in loaded.UpgradeTree.nodes do
+		check("tree id unique " .. node.id, not ids[node.id])
+		ids[node.id] = true
+		local cell = node.q .. "," .. node.r
+		check("tree cell unique " .. cell, not cells[cell])
+		cells[cell] = true
+		for i = 2, #node.costs do
+			check("tree cost rises " .. node.id .. " L" .. i, node.costs[i] > node.costs[i - 1])
+		end
+	end
+	for _, node in loaded.UpgradeTree.nodes do
+		check("tree prerequisite exists " .. node.id, node.requires == nil or ids[node.requires] == true)
+	end
+	check("tree root at 0,0", cells["0,0"] == true and ids.root == true)
+
+	-- Robux shop (GDD §10, §15.5): unique keys, positive prices
+	local keys: { [string]: boolean } = {}
+	for _, list in { loaded.Monetization.passes, loaded.Monetization.products } do
+		for _, item in list do
+			check("shop key unique " .. item.key, not keys[item.key])
+			keys[item.key] = true
+			check("shop price > 0 " .. item.key, item.price > 0)
+		end
+	end
+	check("6 gamepasses, 3 diamond packs", #loaded.Monetization.passes == 6 and keys.diamondsS and keys.diamondsM and keys.diamondsL)
 	check("slots 6 -> 20", loaded.Upgrades.slots.start == 6 and loaded.Upgrades.slots.max == 20)
 	check("MVP rebirth $400M x12", loaded.Rebirth.mvpBaseCost == 4e8 and loaded.Rebirth.growth == 12)
 	check("rebirth keeps treasures", loaded.Rebirth.keepAllTreasures == true)

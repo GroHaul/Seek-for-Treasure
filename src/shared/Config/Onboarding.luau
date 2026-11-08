@@ -17,7 +17,7 @@ local Onboarding: Types.OnboardingConfig = {
 		{ id = "walk", text = "Follow the pawprints to Pawprint Meadow!" },
 		{ id = "watch", text = "Stand still - your whistle searches for you." },
 		{ id = "collect", text = "Your pets earn cash. Step on your Collect pad!" },
-		{ id = "buy", text = "Buy the Wooden Whistle to search faster." },
+		{ id = "buy", text = "Visit the Tools stall and buy the Wooden Whistle." },
 		{ id = "back", text = "Head back to the meadow and keep searching!" },
 	},
 }

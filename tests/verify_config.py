@@ -231,8 +231,15 @@ check("Pets: ids unique", len(set(ids)) == len(ids))
 pot = load("Potions.luau")
 check("Potions: max remaining 60 min", pot["maxRemainingSeconds"] == 3600)
 by_id = {p["id"]: p for p in pot["list"]}
-check("Potions: exactly luck/speed/mutation/cash", sorted(by_id) == sorted(SIM.POTION_PRICE_SECONDS))
+# the sim models the four MVP potions; the Diamond Potion (GDD §15.3) has no cash effect
+check("Potions: luck/speed/mutation/cash + diamond", sorted(by_id) == sorted(list(SIM.POTION_PRICE_SECONDS) + ["diamond"]))
+check("Potions: 5-min restock, every potion in the stock table",
+      pot["restockSeconds"] == 300 and sorted(s["id"] for s in pot["stock"]) == sorted(by_id))
+for s in pot["stock"]:
+    check(f"Stock {s['id']} chance/range", 0 < s["chance"] <= 1 and 1 <= s["min"] <= s["max"])
 for pid, p in by_id.items():
+    if pid == "diamond":
+        continue
     check(f"Potion {pid}", p["durationSeconds"] == SIM.POTION_DURATION and p["priceSeconds"] == SIM.POTION_PRICE_SECONDS[pid]
           and p["minPrice"] == SIM.POTION_MIN_PRICE[pid], f"{p['durationSeconds']}s {p['priceSeconds']}s ${p['minPrice']}")
 check("Potion multipliers (luck 2, speed 1.5, mutation 2, cash 2)",

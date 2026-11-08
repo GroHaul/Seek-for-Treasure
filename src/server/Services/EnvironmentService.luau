@@ -6,8 +6,10 @@
 	world (Rojo can't sync terrain). Nothing here touches gameplay parts.
 
 	Terrain (skipped if the place already has hand-made terrain):
-	  - grass ground over the whole area, its surface 0.25 studs above the
-	    template Baseplate so the Baseplate never shows through
+	  - grass ground over the whole area, its visible surface at y = 0 (see
+	    GROUND_TOP). The Studio template Baseplate also tops out at y = 0 and would
+	    flicker against it, so it's hidden during play (made invisible and
+	    non-colliding, never deleted; the owner can delete it in Studio)
 	  - sandy paths: each plot's front -> a cross path -> the meadow's fence gaps,
 	    plus a small plaza around the code board; sand under every plot so the
 	    terrain's grass blades don't grow through plot floors and pedestals
@@ -23,7 +25,12 @@ local Lighting = game:GetService("Lighting")
 
 local WorldService = require(script.Parent.WorldService)
 
-local GROUND_TOP = 0.25 -- Baseplate top is 0
+-- Terrain voxels are 4 studs, and a flat fill renders its surface 2 studs above
+-- the filled top (measured 2026-11-08: top 0.25 -> 2.27, top 0 -> 2.00, with
+-- ReadVoxels confirming the data). Filling to -2 (the top voxel half full) puts
+-- the visible ground at y = 0, under the plot floors, meadow and market parts.
+local GROUND_TOP = -2
+local SURFACE_Y = 0
 local GROUND_DEPTH = 12
 local GROUND_HALF = 420
 local PATH_WIDTH = 8
@@ -77,6 +84,16 @@ local function buildPaths(terrain: Terrain)
 	end
 	-- a small sandy plaza around the code board outside the east fence gap
 	flat(terrain, Vector3.new(MEADOW_HALF + 12, 0, 0), 24, 24, 4, sand)
+	-- west gap -> market plaza, and sand under the plaza and its stalls
+	local market = WorldService.market
+	if market then
+		local plazaEdge = market.center.X + market.radius
+		flat(terrain, Vector3.new((-MEADOW_HALF + plazaEdge) / 2, 0, 0), -MEADOW_HALF - plazaEdge + 4, PATH_WIDTH, 4, sand)
+		-- FillBlock, not FillCylinder: FillCylinder fills whole voxels and its surface
+		-- comes out 2 studs higher, over the plaza floor
+		local span = (market.radius + 6) * 2
+		flat(terrain, market.center, span, span, 4, sand)
+	end
 end
 
 -- Terrain grass blades (Decoration) grow straight through parts, so the ground
@@ -107,9 +124,9 @@ local function buildPond(terrain: Terrain)
 		local height = top - bottom
 		terrain:FillCylinder(CFrame.new(POND_CENTER.X, bottom + height / 2, POND_CENTER.Z), height, radius, material)
 	end
-	cylinder(POND_RADIUS + 4, GROUND_TOP, -8, Enum.Material.Sand) -- beach rim
-	cylinder(POND_RADIUS, GROUND_TOP, -5, Enum.Material.Air) -- dig
-	cylinder(POND_RADIUS, -0.75, -5, Enum.Material.Water)
+	cylinder(POND_RADIUS + 4, GROUND_TOP, -12, Enum.Material.Sand) -- beach rim and floor
+	cylinder(POND_RADIUS, SURFACE_Y + 4, -9, Enum.Material.Air) -- dig
+	cylinder(POND_RADIUS, -4, -9, Enum.Material.Water) -- renders ~2 studs below the ground
 end
 
 local function buildHills(terrain: Terrain)
@@ -137,11 +154,29 @@ local function buildHills(terrain: Terrain)
 	end
 end
 
+--- The Studio template's 2048 x 16 x 2048 Baseplate sits exactly at the terrain
+--- surface; hide it for this server (the place file is untouched).
+local function hideTemplateBaseplate()
+	local baseplate = workspace:FindFirstChild("Baseplate")
+	if baseplate and baseplate:IsA("BasePart") and baseplate.Size.X >= 512 and math.abs(baseplate.Position.Y + baseplate.Size.Y / 2) < 0.01 then
+		baseplate.Transparency = 1
+		baseplate.CanCollide = false
+		baseplate.CanQuery = false
+		baseplate.CanTouch = false
+		for _, child in baseplate:GetChildren() do
+			if child:IsA("Texture") or child:IsA("Decal") then
+				child.Transparency = 1
+			end
+		end
+	end
+end
+
 local function buildTerrain()
 	local terrain = workspace.Terrain
 	if not terrainIsEmpty(terrain) then
 		return -- hand-made terrain wins
 	end
+	hideTemplateBaseplate()
 	terrain:SetMaterialColor(Enum.Material.Grass, COLORS.grass)
 	terrain:SetMaterialColor(Enum.Material.LeafyGrass, COLORS.leafyGrass)
 	terrain:SetMaterialColor(Enum.Material.Sand, COLORS.sand)

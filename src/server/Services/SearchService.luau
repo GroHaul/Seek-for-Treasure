@@ -9,7 +9,11 @@
 	Search_Reveal. Leaving the zone resets progress to 0 immediately.
 
 	Modifiers: tool luck/interval/mutation from the highest owned tier, rebirth
-	and Index luck, Luck/Speed/Mutation potions; total luck capped at 25.
+	and Index luck, Luck/Speed/Mutation potions, upgrade-tree levels, gamepasses
+	and the Server Luck Boost; total luck capped at 25.
+
+	Diamonds (GDD §15.1): each find also has SearchMath.diamondChance to drop
+	SearchMath.diamondAmount diamonds, added to the profile and sent in the reveal.
 ]]
 
 local Players = game:GetService("Players")
@@ -43,6 +47,7 @@ export type FindInfo = {
 	luck: number,
 	segmentId: string,
 	searchNumber: number,
+	diamonds: number, -- diamonds this find dropped (0 = none)
 }
 
 type State = {
@@ -64,12 +69,12 @@ end
 
 local states: { [Player]: State } = {}
 
-function SearchService.luckFor(profile: Types.Profile, segmentId: string, now: number): number
-	return SearchMath.luck(profile, segmentId, now)
+function SearchService.luckFor(profile: Types.Profile, segmentId: string, now: number, player: Player?): number
+	return SearchMath.luck(profile, segmentId, now, player)
 end
 
-function SearchService.intervalFor(profile: Types.Profile, segmentId: string, now: number): number
-	return SearchMath.interval(profile, segmentId, now)
+function SearchService.intervalFor(profile: Types.Profile, segmentId: string, now: number, player: Player?): number
+	return SearchMath.interval(profile, segmentId, now, player)
 end
 
 --- Highest rarity floor forced on the next search (1 = none).
@@ -108,7 +113,7 @@ export type Force = { rarity: number, mutation: { string }? }
 --- `force` (Studio tests only; ignored live) fixes the rarity and mutations.
 function SearchService.doSearch(player: Player, profile: Types.Profile, segmentId: string, force: Force?): FindInfo
 	local now = os.time()
-	local luck = SearchService.luckFor(profile, segmentId, now)
+	local luck = SearchService.luckFor(profile, segmentId, now, player)
 	local floor = SearchService.floorFor(profile)
 	local result = RollMath.roll(rand, segmentId, luck, floor, SearchMath.mutation(profile, segmentId, now), 1)
 	if force and RunService:IsStudio() then
@@ -135,6 +140,14 @@ function SearchService.doSearch(player: Player, profile: Types.Profile, segmentI
 	local uid, soldFor = InventoryService.add(player, profile, result.treasure, result.mutation)
 	StateService.markDirty(player, "pity", "stats")
 
+	-- the second currency: a chance on every find, more for rarer finds
+	local diamonds = 0
+	if rand() < SearchMath.diamondChance(profile, now) then
+		diamonds = SearchMath.diamondAmount(profile, result.rarity)
+		profile.diamonds += diamonds
+		StateService.markDirty(player, "diamonds")
+	end
+
 	local info: FindInfo = {
 		uid = uid,
 		soldFor = soldFor,
@@ -145,6 +158,7 @@ function SearchService.doSearch(player: Player, profile: Types.Profile, segmentI
 		luck = luck,
 		segmentId = segmentId,
 		searchNumber = profile.stats.searches,
+		diamonds = diamonds,
 	}
 	local payload: Types.RevealPayload = {
 		uid = uid,
@@ -153,6 +167,7 @@ function SearchService.doSearch(player: Player, profile: Types.Profile, segmentI
 		mutation = result.mutation,
 		soldFor = soldFor,
 		pity = SearchService.nearestPity(profile),
+		diamonds = if diamonds > 0 then diamonds else nil,
 	}
 	RemoteService.fire(Net.Search_Reveal, player, payload)
 	SearchService.found:Fire(player, info)
@@ -191,7 +206,7 @@ local function step(dt: number)
 			continue
 		end
 
-		local interval = SearchService.intervalFor(profile, segmentId, now)
+		local interval = SearchService.intervalFor(profile, segmentId, now, player)
 		if state.segmentId ~= segmentId then
 			state.segmentId = segmentId
 			state.progress = 0

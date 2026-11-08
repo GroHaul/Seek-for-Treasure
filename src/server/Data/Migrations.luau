@@ -21,13 +21,22 @@ local Config = Shared.Config
 local Economy = require(Config.Economy) :: Types.EconomyConfig
 local Upgrades = require(Config.Upgrades) :: Types.UpgradesConfig
 local Tools = require(Config.Tools) :: Types.ToolsConfig
+local Potions = require(Config.Potions) :: Types.PotionsConfig
+local UpgradeMath = require(Shared.UpgradeMath)
 
 local ProfileTemplate = require(script.Parent.ProfileTemplate)
 
 local Migrations = {}
 
--- steps[n] upgrades a schema-n profile to schema n+1. None yet (v1 is current).
-local steps: { [number]: (any) -> any } = {}
+-- steps[n] upgrades a schema-n profile to schema n+1.
+local steps: { [number]: (any) -> any } = {
+	-- 1 -> 2 (2026-11-08): diamonds, upgrade tree, potion bag and stall stock.
+	-- The new fields come from the template in reconcile(); bumping the schema
+	-- makes older servers open these profiles read-only instead of saving over them.
+	[1] = function(profile: any): any
+		return profile
+	end,
+}
 
 local KEEP_UNKNOWN = { _lock = true, _legacy = true }
 
@@ -98,6 +107,28 @@ function Migrations.sanitize(profile: Types.Profile): (Types.Profile, number)
 	profile.cash = math.max(0, finiteOr(profile.cash, 0))
 	profile.vault = math.max(0, finiteOr(profile.vault, 0))
 	profile.rebirths = math.max(0, math.floor(finiteOr(profile.rebirths, 0)))
+	profile.diamonds = math.max(0, math.floor(finiteOr(profile.diamonds, 0)))
+
+	-- upgrade levels: known nodes only, clamped to each node's max
+	for nodeId, level in profile.upgrades do
+		local node = UpgradeMath.nodeById[nodeId]
+		if node == nil or node.effect == "slots" or type(level) ~= "number" then
+			profile.upgrades[nodeId] = nil
+		else
+			profile.upgrades[nodeId] = math.clamp(math.floor(finiteOr(level, 0)), 0, UpgradeMath.maxLevel(node))
+		end
+	end
+	-- potion bag: known potions only, whole counts within the bag limit
+	for potionId, count in profile.potionBag do
+		if Catalog.potionById[potionId] == nil or type(count) ~= "number" then
+			profile.potionBag[potionId] = nil
+		else
+			profile.potionBag[potionId] = math.clamp(math.floor(finiteOr(count, 0)), 0, Potions.bagMax)
+		end
+	end
+	if type(profile.potionStock.cycle) ~= "number" or type(profile.potionStock.bought) ~= "table" then
+		profile.potionStock = { cycle = 0, bought = {} }
+	end
 
 	for uid, entry in profile.inventory do
 		local treasure = if type(entry) == "table" then Catalog.treasureById[entry.id] else nil

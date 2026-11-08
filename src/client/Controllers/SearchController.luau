@@ -22,6 +22,7 @@ local Theme = require(UI.Theme)
 local Root = require(UI.Root)
 local Remotes = require(script.Parent.Parent.Remotes)
 local State = require(script.Parent.StateController)
+local Toast = require(script.Parent.ToastController)
 
 local C = Theme.colors
 
@@ -155,6 +156,10 @@ function Search.start()
 		startedAt = workspace:GetServerTimeNow()
 		-- RevealController decides: toast for Common/Uncommon, cinematic for Rare+
 		Search.revealed:Fire(payload)
+		local diamonds = tonumber(payload.diamonds)
+		if diamonds and diamonds > 0 then
+			Toast.show("💎 +" .. Format.number(diamonds) .. " diamonds!", C.skyDeep, 2.2)
+		end
 	end)
 	State.watch({ "pity" }, refreshPity)
 	RunService.RenderStepped:Connect(function()

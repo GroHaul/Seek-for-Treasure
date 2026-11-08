@@ -36,6 +36,23 @@ local Assets: { [string]: Icon } = {
 	slot = { glyph = "🧱", image = "rbxassetid://121177499435167" },
 	lock = { glyph = "🔒", image = "rbxassetid://95315631693920" },
 	close = { glyph = "✕" },
+	-- diamonds, stalls, upgrade tree and Robux shop (uploaded 2026-11-08)
+	diamond = { glyph = "💎", image = "rbxassetid://120139401336850" },
+	potion_diamond = { glyph = "🔮", image = "rbxassetid://117482636144256" },
+	diamondChance = { glyph = "💠", image = "rbxassetid://84611341527824" },
+	walk = { glyph = "👟", image = "rbxassetid://123515951116594" },
+	offlineCap = { glyph = "🌙", image = "rbxassetid://77986424458165" },
+	offlineRate = { glyph = "⏳", image = "rbxassetid://108184866399308" },
+	root = { glyph = "🔍", image = "rbxassetid://104021498820054" },
+	vip = { glyph = "👑", image = "rbxassetid://73783507557871" },
+	fastSearch = { glyph = "🚀", image = "rbxassetid://111889349961039" },
+	autoCollect = { glyph = "🤖", image = "rbxassetid://93633139377617" },
+	serverLuck = { glyph = "📣", image = "rbxassetid://105437595512582" },
+	cashChest = { glyph = "📦", image = "rbxassetid://107943854205132" },
+	market = { glyph = "🛍️", image = "rbxassetid://124328058717060" },
+	-- our own drawn shapes (assets/ui), tinted with ImageColor3
+	hexFill = { glyph = "⬢", image = "rbxassetid://112613028304057" },
+	hexOutline = { glyph = "⬡", image = "rbxassetid://74056572729680" },
 }
 
 return table.freeze(Assets)

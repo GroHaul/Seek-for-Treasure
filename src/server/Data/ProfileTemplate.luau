@@ -1,7 +1,9 @@
 --!strict
 --[[
-	ProfileTemplate: a fresh v1 profile (GDD §11.1). new() returns a brand-new
+	ProfileTemplate: a fresh profile (GDD §11.1). new() returns a brand-new
 	table every call, so players never share nested tables.
+	Schema 2 (2026-11-08) adds diamonds, upgrades, potionBag, potionStock and the
+	Diamond Potion timer.
 ]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -13,7 +15,7 @@ local Economy = require(Config.Economy) :: Types.EconomyConfig
 local Upgrades = require(Config.Upgrades) :: Types.UpgradesConfig
 local Segments = require(Config.Segments) :: { Types.Segment }
 
-local CURRENT_SCHEMA = 1
+local CURRENT_SCHEMA = 2
 
 local ProfileTemplate = {
 	CURRENT_SCHEMA = CURRENT_SCHEMA,
@@ -37,7 +39,11 @@ function ProfileTemplate.new(): Types.Profile
 		plot = { slots = Upgrades.slots.start, layout = {} },
 		tools = tools,
 		segments = segments,
-		potions = { luck = 0, speed = 0, mutation = 0, cash = 0 },
+		potions = { luck = 0, speed = 0, mutation = 0, cash = 0, diamond = 0 },
+		potionBag = {},
+		potionStock = { cycle = 0, bought = {} },
+		diamonds = 0,
+		upgrades = {},
 		pity = { epic = 0, legendary = 0, mythic = 0 },
 		index = {},
 		indexRewards = {},

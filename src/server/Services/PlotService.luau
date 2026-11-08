@@ -20,6 +20,7 @@ local Types = require(Shared.Types)
 local Net = require(Shared.Net)
 local Catalog = require(Shared.Catalog)
 local EconomyMath = require(Shared.EconomyMath)
+local Boosts = require(Shared.Boosts)
 local Format = require(Shared.Format)
 local Signal = require(Shared.Util.Signal)
 local Config = Shared.Config
@@ -75,7 +76,8 @@ function PlotService.plotIndex(player: Player): number?
 	return plotOf[player]
 end
 
---- Income of placed treasures with permanent multipliers only (rebirth).
+--- Income of placed treasures x rebirth multiplier. Potion prices scale with this,
+--- so buying upgrades or passes never makes potions dearer.
 function PlotService.basePlotIncome(profile: Types.Profile): number
 	local sum = 0
 	for _, uid in profile.plot.layout do
@@ -87,10 +89,16 @@ function PlotService.basePlotIncome(profile: Types.Profile): number
 	return sum * EconomyMath.rebirthCashMult(profile.rebirths)
 end
 
+--- Base income x permanent multipliers (Cash Boost upgrade, 2x Cash, VIP):
+--- what offline earnings and Robux cash pouches pay out.
+function PlotService.permanentIncome(player: Player, profile: Types.Profile): number
+	return PlotService.basePlotIncome(profile) * Boosts.cashMult(player, profile)
+end
+
 --- Full live income/sec including potions and friend boost.
 function PlotService.plotIncome(player: Player, profile: Types.Profile): number
 	local boost = EconomyMath.potionMult(profile.potions, "cash", os.time()) * SocialService.friendMult(player)
-	return PlotService.basePlotIncome(profile) * boost
+	return PlotService.permanentIncome(player, profile) * boost
 end
 
 -- Visuals ---------------------------------------------------------------------
@@ -290,6 +298,14 @@ local function pushDerived(player: Player, profile: Types.Profile)
 	StateService.setDerived(player, "plotIndex", plotOf[player] or 0)
 end
 
+--- Re-send income numbers after a pass or upgrade changes them.
+function PlotService.refreshPlayer(player: Player)
+	local profile = DataService.getProfile(player)
+	if profile then
+		pushDerived(player, profile)
+	end
+end
+
 local function layoutChanged(player: Player, profile: Types.Profile)
 	StateService.markDirty(player, "plot")
 	pushDerived(player, profile)
@@ -421,15 +437,21 @@ local function claim(player: Player, profile: Types.Profile, lastOnline: number,
 		warn(`[PlotService] no free plot for {player.UserId}`)
 	end
 
-	-- offline earnings: permanent multipliers only, elapsed clamped to [0, cap]
+	-- offline earnings: permanent multipliers only, elapsed clamped to [0, cap].
+	-- 2x Cash / VIP change the payout, so wait (briefly) for the pass check.
 	if not isNew and lastOnline > 0 then
+		local deadline = os.clock() + 5
+		while player.Parent and player:GetAttribute("SFT_PassesLoaded") ~= true and os.clock() < deadline do
+			task.wait(0.1)
+		end
 		local elapsed = os.time() - lastOnline
-		local amount = EconomyMath.offlineEarnings(PlotService.basePlotIncome(profile), elapsed)
+		local cap, rate = Boosts.offline(player, profile)
+		local amount = EconomyMath.offlineEarnings(PlotService.permanentIncome(player, profile), elapsed, cap, rate)
 		if amount > 0 then
 			profile.cash += amount
 			profile.lifetimeEarned += amount
 			StateService.markDirty(player, "cash", "lifetimeEarned")
-			local seconds = math.clamp(elapsed, 0, Economy.offlineCapSeconds)
+			local seconds = math.clamp(elapsed, 0, cap)
 			RemoteService.fire(Net.Notify, player, { kind = "welcome_back", amount = amount, seconds = seconds })
 			PlotService.offlineGranted:Fire(player, amount, seconds)
 		end
@@ -486,7 +508,8 @@ local function accrualLoop()
 				profile.vault += income * dt
 				StateService.markDirty(player, "vault")
 			end
-			if ZoneService.getPadPlot(player) == index then
+			-- Auto-Collect pass: the vault empties into cash every tick, no pad walk
+			if ZoneService.getPadPlot(player) == index or Boosts.hasPass(player, "autoCollect") then
 				collect(player, profile)
 			end
 			pushDerived(player, profile)

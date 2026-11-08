@@ -112,8 +112,9 @@ function CodeService.redeem(player: Player, profile: Types.Profile, raw: unknown
 		StateService.markDirty(player, "cash", "lifetimeEarned")
 	end
 	if reward.potions then
-		for potionId, doses in reward.potions do
-			PotionService.add(player, profile, potionId, doses, true)
+		-- potions go into the bag; the player drinks them from the hotbar
+		for potionId, count in reward.potions do
+			PotionService.give(player, profile, potionId, count)
 		end
 	end
 	profile.codes[code] = now

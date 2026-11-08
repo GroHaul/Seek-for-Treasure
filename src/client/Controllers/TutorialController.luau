@@ -1,8 +1,8 @@
 --!strict
 --[[
 	TutorialController: the 5-step first-minute tutorial (GDD §1.2, §9.5).
-	walk -> watch -> collect -> buy -> back, each with a banner and a glowing
-	arrow (Beam) from the character to the target. Skippable; when finished or
+	walk -> watch -> collect -> buy (Tools stall) -> back, each with a banner and
+	a glowing arrow (Beam) from the character to the target. Skippable; when finished or
 	skipped it sends Tutorial_Done so it never shows again.
 	Only runs for profiles with flags.tutorialDone == false.
 ]]
@@ -83,6 +83,13 @@ local function ownPadPosition(): Vector3?
 	return if pad and pad:IsA("BasePart") then pad.Position + Vector3.new(0, 2, 0) else nil
 end
 
+--- The Tools stall's counter (published by the server; replicates even when streamed out).
+local function toolsStallPosition(): Vector3?
+	local world = workspace:FindFirstChild("World")
+	local position = if world then world:GetAttribute("ToolsStall") else nil
+	return if typeof(position) == "Vector3" then position + Vector3.new(0, 3, 0) else nil
+end
+
 local function finish()
 	running = false
 	clearArrow()
@@ -102,13 +109,16 @@ local function show(index: number)
 		arrowTo(MEADOW_TARGET)
 	elseif info.id == "collect" then
 		arrowTo(ownPadPosition())
+	elseif info.id == "buy" then
+		arrowTo(toolsStallPosition())
 	else
 		clearArrow()
 	end
 	if info.id == "buy" then
-		local shopButton = Hud.menu.Shop
-		if shopButton then
-			local scale = shopButton:FindFirstChildOfClass("UIScale")
+		-- the SHOPS teleport is the quick way to the market
+		local shopsButton = Hud.menu.SHOPS
+		if shopsButton then
+			local scale = shopsButton:FindFirstChildOfClass("UIScale")
 			if scale then
 				pulseTween = TweenService:Create(scale, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Scale = 1.15 });
 				(pulseTween :: Tween):Play()

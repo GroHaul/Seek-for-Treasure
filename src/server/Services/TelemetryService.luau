@@ -9,6 +9,8 @@
 	Slot / Segment / Rebirth. Collects and sells are summed per player and sent
 	every 30 s, so standing on the pad doesn't spam the API.
 	Custom: RareFind (Mythic+), PityTriggered, Mutation, Rebirth, IndexMilestone.
+	Economy ("Diamonds"): source Search (batched with collects) and Robux, sink
+	Upgrade_<node>. Custom RobuxPurchase (product key, Robux spent).
 	Every call is pcall'd: analytics must never break gameplay.
 ]]
 
@@ -27,8 +29,11 @@ local RebirthService = require(script.Parent.RebirthService)
 local CodeService = require(script.Parent.CodeService)
 local IndexService = require(script.Parent.IndexService)
 local InventoryService = require(script.Parent.InventoryService)
+local UpgradeService = require(script.Parent.UpgradeService)
+local MonetizationService = require(script.Parent.MonetizationService)
 
 local CURRENCY = "Cash"
+local DIAMONDS = "Diamonds"
 local FLUSH_SECONDS = 30
 local FUNNEL = {
 	"Loaded",
@@ -48,7 +53,7 @@ local TelemetryService = {
 	counts = {} :: { [string]: number },
 }
 
-type Pending = { collect: number, sell: number }
+type Pending = { collect: number, sell: number, diamonds: number }
 local funnelDone: { [Player]: { [number]: boolean } } = {}
 local pending: { [Player]: Pending } = {}
 
@@ -64,9 +69,12 @@ local function safe(name: string, fn: () -> ())
 	end
 end
 
-local function balance(player: Player): number
+local function balance(player: Player, currency: string?): number
 	local profile = DataService.getProfile(player)
-	return if profile then profile.cash else 0
+	if profile == nil then
+		return 0
+	end
+	return if currency == DIAMONDS then profile.diamonds else profile.cash
 end
 
 function TelemetryService.funnel(player: Player, step: number)
@@ -80,12 +88,13 @@ function TelemetryService.funnel(player: Player, step: number)
 	end)
 end
 
-local function economy(player: Player, flow: Enum.AnalyticsEconomyFlowType, amount: number, transactionType: string, sku: string)
+local function economy(player: Player, flow: Enum.AnalyticsEconomyFlowType, amount: number, transactionType: string, sku: string, currency: string?)
 	if amount <= 0 then
 		return
 	end
+	local name = currency or CURRENCY
 	safe("Economy_" .. sku, function()
-		AnalyticsService:LogEconomyEvent(player, flow, CURRENCY, amount, balance(player), transactionType, sku)
+		AnalyticsService:LogEconomyEvent(player, flow, name, amount, balance(player, name), transactionType, sku)
 	end)
 end
 
@@ -98,7 +107,7 @@ end
 local function pendingFor(player: Player): Pending
 	local p = pending[player]
 	if p == nil then
-		p = { collect = 0, sell = 0 }
+		p = { collect = 0, sell = 0, diamonds = 0 }
 		pending[player] = p
 	end
 	return p
@@ -112,6 +121,7 @@ local function flush(player: Player)
 	pending[player] = nil
 	economy(player, Enum.AnalyticsEconomyFlowType.Source, math.floor(p.collect), "Gameplay", "Collect")
 	economy(player, Enum.AnalyticsEconomyFlowType.Source, math.floor(p.sell), "Gameplay", "Sell")
+	economy(player, Enum.AnalyticsEconomyFlowType.Source, p.diamonds, "Gameplay", "Search", DIAMONDS)
 end
 
 function TelemetryService.init() end
@@ -146,6 +156,9 @@ function TelemetryService.start()
 	end)
 	SearchService.found:Connect(function(player, info)
 		TelemetryService.funnel(player, 3)
+		if info.diamonds > 0 then
+			pendingFor(player).diamonds += info.diamonds
+		end
 		if info.rarity >= 3 then
 			TelemetryService.funnel(player, 4)
 		end
@@ -195,6 +208,18 @@ function TelemetryService.start()
 	end)
 	IndexService.milestone:Connect(function(player, segmentId, milestone)
 		custom(player, "IndexMilestone", milestone, { segment = segmentId })
+	end)
+	UpgradeService.bought:Connect(function(player, nodeId, _, cost)
+		economy(player, Enum.AnalyticsEconomyFlowType.Sink, cost, "Shop", "Upgrade_" .. nodeId, DIAMONDS)
+	end)
+	MonetizationService.productGranted:Connect(function(player, product, robux)
+		custom(player, "RobuxPurchase", robux, { product = product.key })
+		if product.grant.diamonds then
+			economy(player, Enum.AnalyticsEconomyFlowType.Source, product.grant.diamonds, "IAP", "Robux_" .. product.key, DIAMONDS)
+		end
+	end)
+	MonetizationService.passOwned:Connect(function(player, key)
+		custom(player, "PassOwned", nil, { pass = key })
 	end)
 
 	task.spawn(function()

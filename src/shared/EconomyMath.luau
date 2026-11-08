@@ -5,7 +5,8 @@
 
 	treasureIncome = baseCps[rarity] * segmentMult * min(10, finish * aura) * (1 + 0.15 * (level - 1))
 	plotIncome     = sum(placed treasureIncome) * rebirthMult * boostMult
-	totalLuck      = clamp(toolLuck * (1 + 0.10 * rebirths + indexBonus) * luckPotion, 1, 25)
+	totalLuck      = clamp(toolLuck * (1 + 0.10 * rebirths + indexBonus + upgradeLuck) * luckPotion * passes, 1, 25)
+	(upgrades and passes are passed in by SearchMath / Boosts)
 ]]
 
 local Config = script.Parent.Config
@@ -66,8 +67,10 @@ function EconomyMath.indexLuckBonus(indexRewards: { [string]: number }): number
 	return bonus
 end
 
-function EconomyMath.totalLuck(toolLuck: number, rebirths: number, indexBonus: number, luckPotion: number): number
-	local luck = toolLuck * (1 + Rebirth.luckBonusPerRebirth * rebirths + indexBonus) * luckPotion
+--- `bonus` = Index + upgrade luck (added to the rebirth bonus); `extraMult` = gamepass /
+--- server boost multipliers. The 25x cap applies to the final value.
+function EconomyMath.totalLuck(toolLuck: number, rebirths: number, bonus: number, luckPotion: number, extraMult: number?): number
+	local luck = toolLuck * (1 + Rebirth.luckBonusPerRebirth * rebirths + bonus) * luckPotion * (extraMult or 1)
 	return math.clamp(luck, 1, Economy.luckCap)
 end
 
@@ -81,8 +84,9 @@ function EconomyMath.potionMult(potions: { [string]: number }, id: string, now: 
 	return potion.multiplier
 end
 
-function EconomyMath.searchInterval(toolInterval: number, speedPotion: number): number
-	return math.max(Tools.minSearchInterval, toolInterval / speedPotion)
+--- `mult` = upgrade x Fast Search multipliers (1 = none). Floor: minSearchInterval.
+function EconomyMath.searchInterval(toolInterval: number, speedPotion: number, mult: number?): number
+	return math.max(Tools.minSearchInterval, toolInterval / speedPotion * (mult or 1))
 end
 
 --- Price of the next plot slot when the plot currently has `slots` unlocked.
@@ -105,9 +109,10 @@ function EconomyMath.sellValue(item: ItemLike): number
 end
 
 --- Offline earnings: permanent base income * min(elapsed, cap) * rate. Elapsed is clamped to [0, cap].
-function EconomyMath.offlineEarnings(basePlotIncomePermanent: number, elapsedSeconds: number): number
-	local elapsed = math.clamp(elapsedSeconds, 0, Economy.offlineCapSeconds)
-	return math.floor(basePlotIncomePermanent * elapsed * Economy.offlineRate)
+--- `capSeconds` / `rate` default to Config/Economy (upgrades and VIP raise them, see Boosts.offline).
+function EconomyMath.offlineEarnings(basePlotIncomePermanent: number, elapsedSeconds: number, capSeconds: number?, rate: number?): number
+	local elapsed = math.clamp(elapsedSeconds, 0, capSeconds or Economy.offlineCapSeconds)
+	return math.floor(basePlotIncomePermanent * elapsed * (rate or Economy.offlineRate))
 end
 
 return table.freeze(EconomyMath)

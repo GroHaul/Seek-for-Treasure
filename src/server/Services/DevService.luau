@@ -2,7 +2,7 @@
 --[[
 	DevService: test commands (GDD §12). The Dev_Command remote is created ONLY
 	when RunService:IsStudio(), and only UserId 422765950 may use it.
-	Commands: cash <n>, search <n>, potion <1..4>, pity <n>, status.
+	Commands: cash <n>, diamonds <n>, search <n>, potion <1..5>, pity <n>, status.
 ]]
 
 local HttpService = game:GetService("HttpService")
@@ -22,6 +22,10 @@ local StateService = require(script.Parent.StateService)
 local SearchService = require(script.Parent.SearchService)
 local PlotService = require(script.Parent.PlotService)
 local SocialService = require(script.Parent.SocialService)
+local PotionService = require(script.Parent.PotionService)
+local UpgradeService = require(script.Parent.UpgradeService)
+local ShopService = require(script.Parent.ShopService)
+local MonetizationService = require(script.Parent.MonetizationService)
 local Guard = require(script.Parent.Parent.Util.Guard)
 local RateLimiter = require(script.Parent.Parent.Util.RateLimiter)
 
@@ -35,6 +39,12 @@ local commands: { [string]: (Player, Types.Profile, number?) -> string } = {
 		profile.cash = math.max(0, profile.cash + amount)
 		StateService.markDirty(player, "cash")
 		return "cash = " .. profile.cash
+	end,
+	diamonds = function(player, profile, n)
+		local amount = math.floor(Guard.finite(n) or 1000)
+		profile.diamonds = math.max(0, profile.diamonds + amount)
+		StateService.markDirty(player, "diamonds")
+		return "diamonds = " .. profile.diamonds
 	end,
 	search = function(player, profile, n)
 		local count = Guard.int(n, 1, 10000) or 1
@@ -203,6 +213,35 @@ local hookCommands: { [string]: (...any) -> any } = {
 	end,
 	storeKind = function()
 		return DataService.storeKind
+	end,
+	-- Robux shop / stalls / upgrades (Studio tests)
+	pass = function(userId: number, key: string, owned: boolean)
+		local player = Players:GetPlayerByUserId(userId)
+		return player ~= nil and MonetizationService.testSetPass(player, key, owned ~= false)
+	end,
+	receipt = function(userId: number, key: string, purchaseId: string)
+		local player = Players:GetPlayerByUserId(userId)
+		return if player then MonetizationService.testReceipt(player, key, purchaseId) else "no player"
+	end,
+	buyPotion = function(userId: number, potionId: string)
+		local player = Players:GetPlayerByUserId(userId)
+		local profile = if player then DataService.getProfile(player) else nil
+		return player ~= nil and profile ~= nil and PotionService.buy(player, profile, potionId)
+	end,
+	usePotion = function(userId: number, potionId: string)
+		local player = Players:GetPlayerByUserId(userId)
+		local profile = if player then DataService.getProfile(player) else nil
+		return player ~= nil and profile ~= nil and PotionService.use(player, profile, potionId)
+	end,
+	upgrade = function(userId: number, nodeId: string)
+		local player = Players:GetPlayerByUserId(userId)
+		local profile = if player then DataService.getProfile(player) else nil
+		return player ~= nil and profile ~= nil and UpgradeService.buy(player, profile, nodeId)
+	end,
+	buySlot = function(userId: number)
+		local player = Players:GetPlayerByUserId(userId)
+		local profile = if player then DataService.getProfile(player) else nil
+		return player ~= nil and profile ~= nil and ShopService.buySlot(player, profile)
 	end,
 }
 

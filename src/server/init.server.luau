@@ -18,6 +18,8 @@ local ORDER = {
 	"PlotService",
 	"ShopService",
 	"PotionService",
+	"UpgradeService",
+	"MonetizationService",
 	"RebirthService",
 	"CodeService",
 	"SettingsService",
