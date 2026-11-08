@@ -1,8 +1,10 @@
 --!strict
 --[[
-	Theme: the "Sunny Toybox" style guide (GDD §13.1) as UI tokens.
-	Panels: cream fill, 3 px ink stroke, drop shadow (0, 4) ink at 30%.
-	Buttons: pill; primary Sun, secondary Sky, danger Coral; pressed 0.94 scale.
+	Theme: the "Sunny Toybox" style guide (GDD §13.1) as UI tokens, in the chunky
+	simulator look: glossy gradient fills, a thick ink outline plus a thin white
+	inner border, and white display text with a thick ink outline.
+	Panels: cream gradient fill, 3 px ink stroke, drop shadow (0, 4) ink at 30%.
+	Buttons: rounded tiles; primary Sun, secondary Sky, danger Coral; pressed 0.94 scale.
 	Layout is authored at a 660 x 336 reference (the smallest landscape phone below
 	the Roblox top bar) and scaled with UIScale: phones ~1.0, tablets ~1.5, desktop up to 1.6.
 ]]
@@ -22,6 +24,11 @@ local Theme = {
 		white = Color3.new(1, 1, 1),
 		muted = Color3.fromHex("#8A90A6"),
 		disabled = Color3.fromHex("#B9BCC6"),
+		skyDeep = Color3.fromHex("#1F86E0"),
+		skyLight = Color3.fromHex("#8FD8FF"),
+		cashLight = Color3.fromHex("#9BFFB5"),
+		cashDeep = Color3.fromHex("#1FB45A"),
+		sunLight = Color3.fromHex("#FFF08A"),
 	},
 	fonts = {
 		heading = Font.fromEnum(Enum.Font.FredokaOne),
@@ -29,6 +36,7 @@ local Theme = {
 		body = Font.new(BUILDER_SANS, Enum.FontWeight.Medium),
 	},
 	stroke = 3,
+	outline = 2, -- ink outline around display text
 	shadowOffset = 4,
 	shadowTransparency = 0.7,
 	motion = {

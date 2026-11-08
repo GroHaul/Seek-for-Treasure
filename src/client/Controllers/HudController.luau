@@ -39,67 +39,68 @@ local chipFrames: { [string]: Frame } = {}
 local potionChips: { [string]: TextLabel } = {}
 local lastCash = 0
 
+-- Stat chip: small glossy sky-blue pill with white outlined text.
 local function chip(parent: Instance, name: string, order: number): TextLabel
 	local frame = Kit.panel({
 		Name = name,
 		LayoutOrder = order,
+		BackgroundColor3 = C.sky,
 		Parent = parent,
 	}, UDim.new(0.5, 0))
 	local stroke = frame:FindFirstChildOfClass("UIStroke")
 	if stroke then
-		stroke.Thickness = 2
+		stroke.Thickness = 2.5
 	end
 	chipFrames[name] = frame
-	return Kit.text("", {
+	return Kit.label("", {
 		Name = "Text",
 		Size = UDim2.new(1, -12, 1, -6),
 		Position = UDim2.fromOffset(6, 3),
-		FontFace = Theme.fonts.number,
 		Parent = frame,
 	})
 end
 
 local function buildTop(canvas: Frame)
-	local cashPill = Kit.panel({
+	-- floating cash counter: big icon + big green outlined number, no backing,
+	-- like the counters in simulator games (readable on any background)
+	local cashPill = Kit.new("Frame", {
 		Name = "CashPill",
+		BackgroundTransparency = 1,
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 6),
+		Position = UDim2.new(0.5, 0, 0, 4),
 		Size = UDim2.fromOffset(250, 50),
 		Parent = canvas,
-	}, UDim.new(0.5, 0))
-	Kit.shadow(cashPill, UDim.new(0.5, 0))
-	local icon = Kit.icon("cash", 34)
-	icon.Position = UDim2.fromOffset(12, 8)
-	icon.Parent = cashPill
-	cashText = Kit.text("$0", {
-		Name = "Cash",
-		Size = UDim2.new(1, -64, 1, -10),
-		Position = UDim2.fromOffset(52, 5),
-		FontFace = Theme.fonts.number,
-		TextColor3 = C.ink,
-		Parent = cashPill,
 	})
-	incomeText = Kit.text("+$0/s", {
+	local icon = Kit.icon("cash", 42)
+	icon.AnchorPoint = Vector2.new(0, 0.5)
+	icon.Position = UDim2.new(0, 4, 0.5, 0)
+	icon.Parent = cashPill
+	cashText = Kit.label("$0", {
+		Name = "Cash",
+		Size = UDim2.new(1, -56, 1, 0),
+		Position = UDim2.fromOffset(52, 0),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Parent = cashPill,
+	}, 3)
+	Kit.gradient(C.cashLight, C.cashDeep).Parent = cashText
+	incomeText = Kit.label("+$0/s", {
 		Name = "Income",
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 60),
-		Size = UDim2.fromOffset(220, 20),
-		FontFace = Theme.fonts.number,
-		TextColor3 = C.cash,
-		TextStrokeColor3 = C.ink,
-		TextStrokeTransparency = 0,
+		Position = UDim2.new(0.5, 0, 0, 54),
+		Size = UDim2.fromOffset(220, 22),
+		TextColor3 = C.cashLight,
 		Parent = canvas,
 	})
 	vaultPill = Kit.panel({
 		Name = "VaultPill",
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 84),
-		Size = UDim2.fromOffset(250, 32),
+		Position = UDim2.new(0.5, 0, 0, 82),
+		Size = UDim2.fromOffset(250, 34),
 		BackgroundColor3 = C.cash,
 		Parent = canvas,
 	}, UDim.new(0.5, 0))
 	vaultScale = Kit.new("UIScale", { Parent = vaultPill })
-	vaultText = Kit.text("", { Size = UDim2.new(1, -16, 1, -6), Position = UDim2.fromOffset(8, 3), Parent = vaultPill })
+	vaultText = Kit.label("", { Size = UDim2.new(1, -16, 1, -6), Position = UDim2.fromOffset(8, 3), Parent = vaultPill })
 
 	-- one grid, 3 chips per row, wrapping downward: it stays left of the cash pill
 	-- even on an 800-wide phone canvas, and hidden chips take no space
@@ -133,8 +134,8 @@ local function buildMenu(canvas: Frame)
 		Name = "MenuLeft",
 		BackgroundTransparency = 1,
 		AnchorPoint = Vector2.new(0, 1),
-		Position = UDim2.new(0, 10, 1, -14),
-		Size = UDim2.fromOffset(70, 214),
+		Position = UDim2.new(0, 10, 1, -16),
+		Size = UDim2.fromOffset(74, 214),
 		Parent = canvas,
 	}, { Kit.list(Enum.FillDirection.Vertical, 8, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Bottom) })
 	local right = Kit.new("Frame", {
@@ -142,22 +143,23 @@ local function buildMenu(canvas: Frame)
 		BackgroundTransparency = 1,
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.new(1, -10, 0, 8),
-		Size = UDim2.fromOffset(70, 222),
+		Size = UDim2.fromOffset(74, 222),
 		Parent = canvas,
 	}, { Kit.list(Enum.FillDirection.Vertical, 8, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Top) })
-	local entries: { { icon: string, caption: string, parent: Frame } } = {
-		{ icon = "shop", caption = "Shop", parent = left },
-		{ icon = "inventory", caption = "Bag", parent = left },
-		{ icon = "rebirth", caption = "Rebirth", parent = left },
-		{ icon = "codes", caption = "Codes", parent = right },
-		{ icon = "settings", caption = "Settings", parent = right },
-		{ icon = "index", caption = "Index", parent = right },
+	-- each tile its own toy color, so the menu reads at a glance
+	local entries: { { icon: string, caption: string, parent: Frame, color: Color3 } } = {
+		{ icon = "shop", caption = "Shop", parent = left, color = C.coral },
+		{ icon = "inventory", caption = "Bag", parent = left, color = C.sun },
+		{ icon = "rebirth", caption = "Rebirth", parent = left, color = C.leaf },
+		{ icon = "codes", caption = "Codes", parent = right, color = C.grape },
+		{ icon = "settings", caption = "Settings", parent = right, color = C.sky },
+		{ icon = "index", caption = "Index", parent = right, color = C.sky },
 	}
 	for i, entry in entries do
 		local caption = entry.caption
 		local button = Kit.menuButton(entry.icon, caption, function()
 			Root.toggle(caption)
-		end)
+		end, entry.color)
 		button.LayoutOrder = i
 		button.Parent = entry.parent
 		Hud.menu[caption] = button

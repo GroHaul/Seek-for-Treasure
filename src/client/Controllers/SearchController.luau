@@ -94,36 +94,47 @@ function Search.init()
 		Name = "SearchBar",
 		AnchorPoint = Vector2.new(0.5, 1),
 		Position = UDim2.new(0.5, 0, 1, -10),
-		Size = UDim2.fromOffset(330, 62),
+		Size = UDim2.fromOffset(330, 64),
+		BackgroundColor3 = C.sky,
 		Parent = Root.canvas,
 	}, UDim.new(0, 16))
-	title = Kit.text("Walk into Pawprint Meadow to search", {
+	title = Kit.label("Walk into Pawprint Meadow to search", {
 		Size = UDim2.new(1, -20, 0, 22),
-		Position = UDim2.fromOffset(10, 4),
+		Position = UDim2.fromOffset(10, 3),
+		TextColor3 = C.sun,
 		Parent = bar,
 	})
+	-- dark track with a glossy green fill, like a game progress bar
 	local track = Kit.new("Frame", {
 		Name = "Track",
-		BackgroundColor3 = C.white,
+		BackgroundColor3 = C.ink,
 		BorderSizePixel = 0,
-		Position = UDim2.fromOffset(12, 28),
-		Size = UDim2.new(1, -24, 0, 14),
+		Position = UDim2.fromOffset(12, 27),
+		Size = UDim2.new(1, -24, 0, 16),
 		Parent = bar,
 	}, { Kit.corner(UDim.new(0.5, 0)), Kit.stroke(C.ink, 2) })
 	fill = Kit.new("Frame", {
 		Name = "Fill",
-		BackgroundColor3 = C.cash,
+		BackgroundColor3 = C.white,
 		BorderSizePixel = 0,
 		Size = UDim2.fromScale(0, 1),
 		Parent = track,
+	}, { Kit.corner(UDim.new(0.5, 0)), Kit.gradient(C.cashLight, C.cashDeep) })
+	Kit.new("Frame", {
+		Name = "Shine",
+		BackgroundColor3 = C.white,
+		BackgroundTransparency = 0.55,
+		BorderSizePixel = 0,
+		Position = UDim2.fromOffset(6, 3),
+		Size = UDim2.new(1, -12, 0, 4),
+		Parent = fill,
 	}, { Kit.corner(UDim.new(0.5, 0)) })
-	pityText = Kit.text("", {
-		Size = UDim2.new(1, -20, 0, 14),
+	pityText = Kit.label("", {
+		Size = UDim2.new(1, -20, 0, 15),
 		Position = UDim2.fromOffset(10, 45),
-		FontFace = Theme.fonts.number,
-		TextColor3 = C.grape,
+		TextColor3 = Color3.fromHex("#D9C2FF"),
 		Parent = bar,
-	})
+	}, 1.5)
 end
 
 function Search.start()

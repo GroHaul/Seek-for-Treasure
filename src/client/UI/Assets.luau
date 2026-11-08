@@ -1,16 +1,16 @@
 --!strict
 --[[
-	Assets: UI image ids for the ForgeGUI kit (GDD §13.2). Empty until the
-	ForgeGUI -> Roblox publishing connection can upload images (it currently
-	reports asset_permission_missing). Every UI element falls back to the emoji
-	glyph below, so the game is fully usable with no images.
+	Assets: UI image ids for the ForgeGUI kit (GDD §13.2). Each ForgeGUI image
+	costs about 2,000 credits (measured 2026-11-08), so only icons the owner
+	approves get one. Every other UI element falls back to the emoji glyph
+	below, so the game is fully usable with no images.
 ]]
 
 export type Icon = { image: string?, glyph: string }
 
 local Assets: { [string]: Icon } = {
 	shop = { glyph = "🛒" },
-	inventory = { glyph = "🎒" },
+	inventory = { glyph = "🎒", image = "rbxassetid://116299538304293" }, -- ForgeGUI test icon, 2026-11-08
 	rebirth = { glyph = "🌟" },
 	codes = { glyph = "🎁" },
 	settings = { glyph = "⚙️" },

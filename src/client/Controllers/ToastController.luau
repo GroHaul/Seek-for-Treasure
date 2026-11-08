@@ -46,18 +46,14 @@ function Toast.show(text: string, color: Color3?, seconds: number?)
 			oldest:Destroy()
 		end
 	end
+	-- glossy pill in the message's color with white outlined text
 	local toast = Kit.panel({
 		Name = "Toast",
 		Size = UDim2.fromOffset(410, 36),
-		BackgroundColor3 = C.cream,
+		BackgroundColor3 = color or C.sky,
 		LayoutOrder = math.floor(os.clock() * 1000),
 	}, UDim.new(0.5, 0))
-	local stroke = toast:FindFirstChildOfClass("UIStroke")
-	if stroke and color then
-		stroke.Color = color
-		stroke.Thickness = 4
-	end
-	Kit.text(text, { Size = UDim2.new(1, -24, 1, -8), Position = UDim2.fromOffset(12, 4), Parent = toast })
+	Kit.label(text, { Size = UDim2.new(1, -24, 1, -8), Position = UDim2.fromOffset(12, 4), Parent = toast })
 	local scale = Kit.new("UIScale", { Scale = 0.6, Parent = toast })
 	toast.Parent = stack
 	TweenService:Create(scale, Theme.motion.bouncy, { Scale = 1 }):Play()
@@ -110,14 +106,12 @@ local function showWelcome(amount: number, seconds: number)
 	Kit.list(Enum.FillDirection.Vertical, 10).Parent = content
 	Kit.text("While you were away for " .. Format.duration(seconds) .. ",", { Size = UDim2.new(1, 0, 0, 26), LayoutOrder = 1, Parent = content })
 	Kit.text("your pets earned", { Size = UDim2.new(1, 0, 0, 26), LayoutOrder = 2, Parent = content })
-	Kit.text(Format.cash(amount), {
+	local amountText = Kit.label(Format.cash(amount), {
 		Size = UDim2.new(1, 0, 0, 56),
-		TextColor3 = C.cash,
-		TextStrokeColor3 = C.ink,
-		TextStrokeTransparency = 0,
 		LayoutOrder = 3,
 		Parent = content,
-	})
+	}, 3)
+	Kit.gradient(C.cashLight, C.cashDeep).Parent = amountText
 	Kit.text("Offline earnings: 50% rate, up to 2 hours", { Size = UDim2.new(1, 0, 0, 20), TextColor3 = C.muted, LayoutOrder = 4, Parent = content })
 	local ok = Kit.button("Collect!", "primary", function()
 		Root.close()

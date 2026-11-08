@@ -53,7 +53,7 @@ local function row(order: number, iconName: string, titleText: string, subText: 
 	local icon = Kit.icon(iconName, 36)
 	icon.Position = UDim2.fromOffset(10, 11)
 	icon.Parent = frame
-	Kit.text(titleText, {
+	Kit.label(titleText, {
 		Size = UDim2.new(1, -230, 0, 24),
 		Position = UDim2.fromOffset(56, 6),
 		TextXAlignment = Enum.TextXAlignment.Left,

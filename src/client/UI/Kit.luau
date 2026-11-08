@@ -71,6 +71,57 @@ function Kit.list(direction: Enum.FillDirection, gap: number, align: Enum.Horizo
 	})
 end
 
+--- Gradient from `top` to `bottom` on the parent's fill (children aren't affected).
+function Kit.gradient(top: Color3, bottom: Color3, rotation: number?): any
+	return Kit.new("UIGradient", { Color = ColorSequence.new(top, bottom), Rotation = rotation or 90 })
+end
+
+--- Glossy shading for any fill color: full brightness on top, a soft shade at the bottom.
+function Kit.shade(): any
+	return Kit.new("UIGradient", {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+			ColorSequenceKeypoint.new(0.55, Color3.fromRGB(242, 242, 242)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(196, 196, 196)),
+		}),
+		Rotation = 90,
+	})
+end
+
+--- Thin white border inset inside `target` (the double-outline toy look). Takes no input.
+function Kit.innerBorder(target: GuiObject, radius: UDim, inset: number?, transparency: number?)
+	local i = inset or 3
+	local inner = if radius.Scale > 0 then radius else UDim.new(0, math.max(0, radius.Offset - i))
+	Kit.new("Frame", {
+		Name = "InnerBorder",
+		BackgroundTransparency = 1,
+		Active = false,
+		Position = UDim2.fromOffset(i, i),
+		Size = UDim2.new(1, -2 * i, 1, -2 * i),
+		Parent = target,
+	}, {
+		Kit.corner(inner),
+		Kit.new("UIStroke", {
+			Color = C.white,
+			Thickness = 2,
+			Transparency = transparency or 0.35,
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+		}),
+	})
+end
+
+--- Thick outline around a label's glyphs.
+function Kit.outline(label: GuiObject, thickness: number?, color: Color3?): UIStroke
+	return Kit.new("UIStroke", {
+		Name = "Outline",
+		Color = color or C.ink,
+		Thickness = thickness or Theme.outline,
+		ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
+		LineJoinMode = Enum.LineJoinMode.Round,
+		Parent = label,
+	})
+end
+
 function Kit.text(text: string, props: { [string]: any }?): TextLabel
 	local label = Kit.new("TextLabel", {
 		BackgroundTransparency = 1,
@@ -90,6 +141,16 @@ function Kit.text(text: string, props: { [string]: any }?): TextLabel
 	return label
 end
 
+--- Display text: white Fredoka One with a thick ink outline (pass TextColor3 to tint it).
+function Kit.label(text: string, props: { [string]: any }?, outline: number?): TextLabel
+	local label = Kit.text(text, props)
+	if props == nil or props.TextColor3 == nil then
+		label.TextColor3 = C.white
+	end
+	Kit.outline(label, outline)
+	return label
+end
+
 --- Icon from Assets: ImageLabel when an uploaded image exists, else the emoji glyph.
 function Kit.icon(name: string, size: number): GuiObject
 	local asset = Assets[name]
@@ -102,19 +163,27 @@ function Kit.icon(name: string, size: number): GuiObject
 			ScaleType = Enum.ScaleType.Fit,
 		})
 	end
-	return Kit.text(if asset then asset.glyph else "?", {
+	local glyph = Kit.text(if asset then asset.glyph else "?", {
 		Name = "Icon",
 		Size = UDim2.fromOffset(size, size),
 		FontFace = Theme.fonts.body,
 	})
+	-- let emoji fill the box like an image icon would
+	local limit = glyph:FindFirstChildOfClass("UITextSizeConstraint")
+	if limit then
+		limit.MaxTextSize = math.floor(size * 1.1)
+	end
+	return glyph
 end
 
---- Cream panel with ink stroke and rounded corners.
+--- Cream panel: glossy gradient, ink stroke, white inner border, rounded corners.
 function Kit.panel(props: { [string]: any }?, radius: UDim?): Frame
+	local r = radius or UDim.new(0, 18)
 	local frame = Kit.new("Frame", {
 		BackgroundColor3 = C.cream,
 		BorderSizePixel = 0,
-	}, { Kit.corner(radius or UDim.new(0, 18)), Kit.stroke() })
+	}, { Kit.corner(r), Kit.stroke(), Kit.shade() })
+	Kit.innerBorder(frame, r, 3, 0.2)
 	if props then
 		for key, value in props do
 			(frame :: any)[key] = value
@@ -157,7 +226,11 @@ local KIND_COLORS = {
 	neutral = C.white,
 }
 
---- Pill button. kind: primary | secondary | danger | success | neutral.
+local BUTTON_RADIUS = UDim.new(0, 14)
+
+--- Glossy toy button: color fill with a top-light gradient, thick ink outline,
+--- white inner border and white outlined text (in the child TextLabel "Label").
+--- kind: primary | secondary | danger | success | neutral.
 function Kit.button(text: string, kind: string, onActivated: () -> (), props: { [string]: any }?): Button
 	local base = (KIND_COLORS :: any)[kind] or C.sun
 	local enabled = true
@@ -166,19 +239,26 @@ function Kit.button(text: string, kind: string, onActivated: () -> (), props: { 
 		AutoButtonColor = false,
 		BackgroundColor3 = base,
 		BorderSizePixel = 0,
-		Text = text,
-		FontFace = Theme.fonts.heading,
-		TextColor3 = C.ink,
-		TextScaled = true,
-		RichText = true,
+		Text = "",
 		Size = UDim2.fromOffset(150, 48),
 	}, {
-		Kit.corner(UDim.new(0.5, 0)),
+		Kit.corner(BUTTON_RADIUS),
 		Kit.stroke(),
+		Kit.shade(),
 		scale,
-		Kit.new("UIPadding", { PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12), PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6) }),
-		Kit.new("UITextSizeConstraint", { MaxTextSize = 26, MinTextSize = 9 }),
 	}) :: TextButton
+	Kit.innerBorder(button, BUTTON_RADIUS)
+	local label = Kit.label(text, {
+		Name = "Label",
+		Size = UDim2.new(1, -18, 1, -12),
+		Position = UDim2.fromOffset(9, 6),
+		Parent = button,
+	})
+	local labelOutline = label:FindFirstChild("Outline") :: UIStroke
+	local sizeLimit = label:FindFirstChildOfClass("UITextSizeConstraint")
+	if sizeLimit then
+		sizeLimit.MaxTextSize = 26
+	end
 	if props then
 		for key, value in props do
 			(button :: any)[key] = value
@@ -208,10 +288,11 @@ function Kit.button(text: string, kind: string, onActivated: () -> (), props: { 
 			enabled = on
 			button.Active = on
 			button.BackgroundColor3 = if on then base else Theme.desaturate(base)
-			button.TextTransparency = if on then 0 else 0.35
+			label.TextTransparency = if on then 0 else 0.3
+			labelOutline.Transparency = if on then 0 else 0.3
 		end,
 		setText = function(t: string)
-			button.Text = t
+			label.Text = t
 		end,
 		setColor = function(color: Color3)
 			base = color
@@ -221,24 +302,26 @@ function Kit.button(text: string, kind: string, onActivated: () -> (), props: { 
 	return api
 end
 
---- Round HUD menu button: icon + caption, 66 x 66 reference size.
-function Kit.menuButton(iconName: string, caption: string, onActivated: () -> ()): TextButton
-	local button = Kit.button("", "neutral", onActivated, { Size = UDim2.fromOffset(66, 66), Name = caption })
-	local inst = button.instance
-	local corner = inst:FindFirstChildOfClass("UICorner")
-	if corner then
-		corner.CornerRadius = UDim.new(0.3, 0)
+--- HUD menu tile: glossy rounded square with a big icon and an outlined caption
+--- along the bottom edge. 66 x 66 reference size.
+function Kit.menuButton(iconName: string, caption: string, onActivated: () -> (), color: Color3?): TextButton
+	local button = Kit.button("", "secondary", onActivated, { Size = UDim2.fromOffset(66, 66), Name = caption })
+	if color then
+		button.setColor(color)
 	end
-	local icon = Kit.icon(iconName, 34)
+	local inst = button.instance
+	local icon = Kit.icon(iconName, 42)
 	icon.AnchorPoint = Vector2.new(0.5, 0)
 	icon.Position = UDim2.new(0.5, 0, 0, 2)
 	icon.Parent = inst
-	Kit.text(caption, {
-		Size = UDim2.new(1, 8, 0, 16),
-		Position = UDim2.new(0.5, 0, 1, -2),
+	-- the caption may spill a little past the sides, never below into the next tile
+	Kit.label(caption, {
+		Name = "Caption",
+		Size = UDim2.new(1, 12, 0, 20),
+		Position = UDim2.new(0.5, 0, 1, 1),
 		AnchorPoint = Vector2.new(0.5, 1),
 		Parent = inst,
-	})
+	}, 2.5)
 	return inst
 end
 

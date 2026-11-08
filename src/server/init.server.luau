@@ -10,6 +10,7 @@ local ORDER = {
 	"RemoteService",
 	"StateService",
 	"WorldService",
+	"EnvironmentService",
 	"ZoneService",
 	"SocialService",
 	"InventoryService",

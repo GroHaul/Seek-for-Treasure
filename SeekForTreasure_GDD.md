@@ -846,6 +846,12 @@ Every handler starts with `RateLimiter.allow` → type check → range/NaN check
 
 The UI is built natively in Luau from these tokens (`src/client/UI/Theme.luau`, `Kit.luau`): cream panels, 3 px Ink strokes, pill buttons, Fredoka One headings, Builder Sans numbers. Layout is authored at a 660 × 336 reference (the smallest landscape phone below the Roblox top bar) and scaled with `UIScale`, clamped 0.75–1.6, so every button is ≥ 48 px from iPhone SE to 1080p. ForgeGUI images slot in through `src/client/UI/Assets.luau` once the publishing connection can upload them; until then each icon falls back to an emoji glyph. Search progress is a bar, not a ring, until the ring image exists.
 
+### 13.1.2 Simulator-style restyle and world dressing (2026-11-08)
+
+The owner asked for the chunky simulator-game UI look. It's done in code in the Sunny Toybox palette (no copied art, text or layout): glossy gradient fills (`Kit.shade`), a 3 px ink outline plus a thin white inner border on every panel and button, white Fredoka One text with a thick ink outline (`Kit.label`), colored menu tiles with the caption along the bottom edge (Shop coral, Bag sun, Rebirth leaf, Codes grape, Settings/Index sky), a floating green-gradient cash counter, a glossy green Vault pill, sky stat chips, a sky search card with a dark track and glossy green fill, colored toasts, and modals with a sky gradient header. Layout audit (iPhone SE, iPhone 14, iPad, 1080p, worst case 8 chips): no overlaps, menu tiles 66–106 px. ForgeGUI images cost about **2,000 credits each** (one test icon: 95,253 → 93,211), so the full ~50-image kit (~100K credits) is not affordable on the 10K budget; only the Bag icon (asset 116299538304293) is in use and every other icon is an emoji until the owner approves specific images.
+
+`EnvironmentService` builds terrain and lighting in code at server start: grass ground over the template Baseplate, sandy paths from each plot to a cross path and the meadow's fence gaps, a sand plaza at the code board, a pond east of the meadow, a ring of rolling hills with rocks, warm afternoon lighting with light atmosphere and low bloom. Terrain grass blades grow through parts, so the ground under plots is sand and under the meadow is LeafyGrass (no blades). `Lighting.Technology` can't be scripted: set it to Future in Studio.
+
 ### 13.2 UI kit
 
 | Asset | Count | Notes |

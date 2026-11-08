@@ -120,33 +120,40 @@ function Root.modal(name: string, title: string, size: Vector2): Modal
 		Parent = canvas,
 	})
 	Kit.shadow(frame)
+	-- sky-blue header band with a glossy gradient and a big outlined title
 	local header = Kit.new("Frame", {
 		Name = "Header",
-		BackgroundColor3 = C.sky,
+		BackgroundColor3 = C.white,
 		BorderSizePixel = 0,
-		Size = UDim2.new(1, 0, 0, 48),
+		Size = UDim2.new(1, 0, 0, 50),
 		ZIndex = 61,
 		Parent = frame,
-	}, { Kit.corner(UDim.new(0, 18)) })
+	}, { Kit.corner(UDim.new(0, 18)), Kit.gradient(C.skyLight, C.skyDeep) })
 	-- square off the header's bottom corners
 	Kit.new("Frame", {
-		BackgroundColor3 = C.sky,
+		BackgroundColor3 = C.skyDeep,
 		BorderSizePixel = 0,
 		Position = UDim2.new(0, 0, 1, -18),
 		Size = UDim2.new(1, 0, 0, 18),
 		ZIndex = 61,
 		Parent = header,
 	})
-	Kit.text(title, {
-		Size = UDim2.new(1, -120, 0, 34),
-		Position = UDim2.fromOffset(20, 7),
-		TextXAlignment = Enum.TextXAlignment.Left,
-		TextColor3 = C.white,
-		TextStrokeColor3 = C.ink,
-		TextStrokeTransparency = 0,
+	Kit.new("Frame", {
+		Name = "Rule",
+		BackgroundColor3 = C.ink,
+		BorderSizePixel = 0,
+		Position = UDim2.fromScale(0, 1),
+		Size = UDim2.new(1, 0, 0, 3),
 		ZIndex = 62,
 		Parent = header,
 	})
+	Kit.label(title, {
+		Size = UDim2.new(1, -120, 0, 38),
+		Position = UDim2.fromOffset(20, 6),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		ZIndex = 62,
+		Parent = header,
+	}, 3)
 	local close = Kit.button("X", "danger", function()
 		Root.close()
 	end, { Size = UDim2.fromOffset(48, 48), AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 10, 0, -10), ZIndex = 64, Name = "Close" })
@@ -154,8 +161,8 @@ function Root.modal(name: string, title: string, size: Vector2): Modal
 	local content = Kit.new("Frame", {
 		Name = "Content",
 		BackgroundTransparency = 1,
-		Position = UDim2.fromOffset(16, 60),
-		Size = UDim2.new(1, -32, 1, -72),
+		Position = UDim2.fromOffset(16, 64),
+		Size = UDim2.new(1, -32, 1, -76),
 		ZIndex = 61,
 		Parent = frame,
 	}) :: Frame
