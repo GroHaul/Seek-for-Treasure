@@ -887,6 +887,8 @@ The owner asked for the chunky simulator-game UI look. It's done in code in the 
 | Eclipse Griffin | 95057896845772 | ✅ in game |
 | Pebble Pup, Sprout Kitten, Puddle Duckling, Toasty Corgi, Ember Fox, Storm Pony, Halo Owl, Starlight Stag | — | ⛔ ForgeGUI jobs failed; placeholder ball until the owner approves new generations |
 
+**Blender pipeline (owner's call, 2026-11-08; replaces ForgeGUI for treasures):** `tools/blender/build_treasures.py` models all 12 Pets treasures from rounded primitives in Blender 5.2 (headless), each one mesh with one material on a shared 8×8 palette texture (UVs point at each part's color cell), on a disc in its rarity color; 2.4K–4.8K triangles each. It exports `assets/models/pets_treasures.glb`; the owner imports that once in Studio (File → Import 3D) and it's stored as `ServerStorage.TreasureModels` (TextureID converted to a SurfaceAppearance so mutation tints work). `ModelService` uses these first, then the ForgeGUI `modelAssetId` uploads, then the ball. The place must be saved to Roblox for live servers to have them. Gotcha: the mesh must have exactly one UV set (Roblox reads TEXCOORD_0 only).
+
 Count: 12 per segment, **12 in the MVP** and 36 in the Backlog. Pipeline: `generation_model_3d` (style-locked) → `asset_prepare` (measure tris, `bounds_bottom_center` pivot, scale to a 4-stud height) → human originality review → `artifact_publish` (needs a valid Roblox connection and **your go-ahead**).
 
 ### 13.4 Area props and plot pedestals (MVP = Pets + plots)
